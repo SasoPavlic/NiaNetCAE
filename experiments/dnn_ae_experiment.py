@@ -2,8 +2,6 @@ import torch
 from lightning.pytorch import LightningModule
 from torch import Tensor
 from torch import optim
-
-from experiments.anomaly_detection import AnomalyDetection
 from experiments.metrics import RMSE
 from models.base import BaseAutoencoder
 
@@ -70,7 +68,10 @@ class DNNAEExperiment(LightningModule):
             return optims
 
     def training_step(self, batch, batch_idx, optimizer_idx=0):
-        real_signal, labels = batch
+        # TODO change training to convolutional
+        real_signal = batch['image']
+        labels = batch['depth']
+
         self.curr_device = real_signal.device
         results = self.forward(real_signal)
         train_loss = self.model.loss_function(*results,
@@ -115,11 +116,10 @@ class DNNAEExperiment(LightningModule):
                 self.testing_RMSE_metric.update(results[0], results[1])
 
     def on_train_end(self) -> None:
-        self.get_AUC_metric()
+        self.evaluate_model()
 
-    def get_AUC_metric(self):
-        anomaly_detection = AnomalyDetection([0], [1])
-        dataloader_iterator = iter(self.trainer.datamodule.test_dataloader())
+    def evaluate_model(self):
+        dataloader_iterator = iter(self.trainer.train_dataloader)
 
         inputs = []
         outputs = []
@@ -139,6 +139,4 @@ class DNNAEExperiment(LightningModule):
                 score = torch.sqrt(torch.sum((y - x) ** 2, dim=tuple(range(1, y.dim()))))
                 scores.append(score.cpu().data.numpy().tolist())
 
-        anomaly_detection.calculate_roc_auc_curve(targets, scores)
-
-        self.AUC = anomaly_detection.AUC
+        self.AUC = 0.0
