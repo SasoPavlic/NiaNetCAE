@@ -15,8 +15,7 @@ from tabulate import tabulate
 
 from dataloaders.images import NYUDataset
 from experiments.dnn_ae_experiment import DNNAEExperiment
-from models.conv_ae import ConvolutionalAutoencoder, ConvAutoencoder
-from models.dnn_ae import Autoencoder
+from models.conv_ae import ConvAutoencoder
 from niapy_extension.wrapper import *
 from storage.database import SQLiteConnector
 
@@ -78,7 +77,7 @@ class DNNAEArchitecture(ExtendedProblem):
         else:
             # TODO Find a more optimal way
             """Punishing bad decisions"""
-            if len(model.encoder) == 0 or len(model.decoder) == 0:
+            if len(model.encoding_layers) == 0 or len(model.decoding_layers) == 0:
             #if len(model.encoder.net) == 0 or len(model.decoder.net) == 0:
                 RMSE = int(9e10)
                 AUC = 0.0
@@ -90,14 +89,14 @@ class DNNAEArchitecture(ExtendedProblem):
 
                 runner = Trainer(logger=tb_logger,
                                  enable_progress_bar=True,
-                                 accelerator="gpu",
-                                 devices=1,
+                                 accelerator="cpu",
+                                 #devices=1,
                                  #auto_select_gpus=True,
                                  callbacks=[
                                      LearningRateMonitor(),
                                      ModelCheckpoint(save_top_k=1,
                                                      dirpath=os.path.join(tb_logger.log_dir, "checkpoints"),
-                                                     monitor="val_loss",
+                                                     monitor="loss",
                                                      save_last=True),
                                      early_stop_callback,
                                  ],
@@ -113,10 +112,10 @@ class DNNAEArchitecture(ExtendedProblem):
                 # Known problem: https://discuss.pytorch.org/t/why-my-model-returns-nan/24329/5
                 if math.isnan(experiment.test_RMSE.item()):
                     RMSE = int(9e10)
-                    AUC = experiment.AUC
+                    AUC = 0.0
                 else:
                     RMSE = experiment.test_RMSE.item()
-                    AUC = experiment.AUC
+                    AUC = 0.0
 
             complexity = (model.num_epochs ** 2) + (model.num_layers * 100) + (model.bottleneck_size * 10)
             fitness = (RMSE * 1000) + (complexity / 100)
