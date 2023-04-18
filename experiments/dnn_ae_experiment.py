@@ -2,6 +2,8 @@ import torch
 from lightning.pytorch import LightningModule
 from torch import Tensor
 from torch import optim
+from torchmetrics import MeanSquaredError
+
 from experiments.metrics import RMSE
 from models.base import BaseAutoencoder
 
@@ -24,7 +26,8 @@ class DNNAEExperiment(LightningModule):
         # https://torchmetrics.readthedocs.io/en/latest/pages/overview.html#metrics-and-devices
         self.testing_RMSE_metric = RMSE()
         self.test_RMSE = None
-        self.AUC = None
+        self.testing_MSE_metric = MeanSquaredError()
+        self.test_RMSE = None
 
         try:
             self.hold_graph = self.params['retain_first_backpass']
@@ -80,22 +83,8 @@ class DNNAEExperiment(LightningModule):
 
         self.log_dict({key: val.item() for key, val in train_loss.items()}, sync_dist=True, on_step=False,
                       on_epoch=True)
+
         return train_loss['loss']
-
-    def validation_step(self, batch, batch_idx, optimizer_idx=0):
-        real_signal, labels = batch
-        self.curr_device = real_signal.device
-
-        results = self.forward(real_signal)
-        val_loss = self.model.loss_function(*results,
-                                            optimizer_idx=optimizer_idx,
-                                            batch_idx=batch_idx)
-
-        self.log_dict({f"val_{key}": val.item() for key, val in val_loss.items()}, sync_dist=True, on_step=False,
-                      on_epoch=True)
-        # TODO add more metrics
-        # https://github.com/Lightning-AI/metrics/issues/340#issuecomment-872073730
-        return val_loss['loss']
 
     def on_fit_end(self) -> None:
         self.test_model()
@@ -107,36 +96,12 @@ class DNNAEExperiment(LightningModule):
 
         while True:
             try:
-                data, target = next(dataloader_iterator)
+                batch = next(dataloader_iterator)
+                data = batch['image']
+                target = batch['depth']
             except StopIteration:
                 break
             finally:
                 self.testing_RMSE_metric.to(self.curr_device)
                 results = self.model.generate(data, labels=target)
                 self.testing_RMSE_metric.update(results[0], results[1])
-
-    def on_train_end(self) -> None:
-        self.evaluate_model()
-
-    def evaluate_model(self):
-        dataloader_iterator = iter(self.trainer.train_dataloader)
-
-        inputs = []
-        outputs = []
-        scores = []
-        targets = []
-
-        "Loop over dataset"
-        for data, target in dataloader_iterator:
-            data = data.to(self.curr_device)
-            reconstructed, input = self.model.forward(data)
-
-            "Loop over batch"
-            for x, y, z in zip(input, reconstructed, target):
-                inputs.append(x)
-                outputs.append(y)
-                targets.append(z.item())
-                score = torch.sqrt(torch.sum((y - x) ** 2, dim=tuple(range(1, y.dim()))))
-                scores.append(score.cpu().data.numpy().tolist())
-
-        self.AUC = 0.0
