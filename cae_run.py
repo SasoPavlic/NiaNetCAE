@@ -47,7 +47,7 @@ early_stop_callback = EarlyStopping(monitor=config['early_stop']['monitor'],
 conn = SQLiteConnector(config['logging_params']['db_storage'], f"solutions")  # _{RUN_UUID}")
 seed_everything(config['exp_params']['manual_seed'], True)
 
-datamodule = NYUDataset(**config["data_params"], pin_memory=True)
+datamodule = NYUDataset(**config["data_params"])
 datamodule.setup()
 
 
@@ -63,8 +63,7 @@ class DNNAEArchitecture(ExtendedProblem):
         print(f"SOLUTION : {solution}")
         self.iteration += 1
 
-        #model = Autoencoder(solution, **config)
-        model = ConvAutoencoder()
+        model = ConvAutoencoder(solution, **config)
         existing_entry = conn.get_entries(hash_id=model.hash_id)
         path = config['logging_params']['save_dir'] + str(self.iteration) + "_" + alg_name + "_" + model.hash_id
         Path(path).mkdir(parents=True, exist_ok=True)
@@ -78,19 +77,17 @@ class DNNAEArchitecture(ExtendedProblem):
             # TODO Find a more optimal way
             """Punishing bad decisions"""
             if len(model.encoding_layers) == 0 or len(model.decoding_layers) == 0:
-            #if len(model.encoder.net) == 0 or len(model.decoder.net) == 0:
-                RMSE = int(9e10)
-                AUC = 0.0
+                CADL = int(9e10)
             else:
-                experiment = DNNAEExperiment(model, config['exp_params'], config['model_params']['n_features'])
+                experiment = DNNAEExperiment(model, config['exp_params'], config['model_params']['tensor_dim'])
                 config['trainer_params']['max_epochs'] = model.num_epochs
                 tb_logger = TensorBoardLogger(save_dir=config['logging_params']['save_dir'],
                                               name=str(self.iteration) + "_" + alg_name + "_" + model.hash_id)
 
                 runner = Trainer(logger=tb_logger,
                                  enable_progress_bar=True,
-                                 accelerator="cpu",
-                                 #devices=1,
+                                 accelerator="cuda",
+                                 devices=1,
                                  #auto_select_gpus=True,
                                  callbacks=[
                                      LearningRateMonitor(),
@@ -107,22 +104,15 @@ class DNNAEArchitecture(ExtendedProblem):
                 print(f'\nTraining start: {datetime.now().strftime("%H:%M:%S-%d/%m/%Y")}')
                 runner.fit(experiment, datamodule=datamodule)
                 print(f'\nTraining end: {datetime.now().strftime("%H:%M:%S-%d/%m/%Y")}')
-
-                # TODO Find a more optimal way
-                # Known problem: https://discuss.pytorch.org/t/why-my-model-returns-nan/24329/5
-                if math.isnan(experiment.test_RMSE.item()):
-                    RMSE = int(9e10)
-                    AUC = 0.0
-                else:
-                    RMSE = experiment.test_RMSE.item()
-                    AUC = 0.0
+                runner.test(experiment, datamodule=datamodule)
+                CADL = experiment.CADL_score.item()
 
             complexity = (model.num_epochs ** 2) + (model.num_layers * 100) + (model.bottleneck_size * 10)
-            fitness = (RMSE * 1000) + (complexity / 100)
+            fitness = (CADL * 1000) + (complexity / 100)
 
-            print(tabulate([[RMSE, AUC, complexity, fitness]], headers=["RMSE", "AUC", "Complexity", "Fitness"],
+            print(tabulate([[CADL, complexity, fitness]], headers=["RMSE", "AUC", "Complexity", "Fitness"],
                            tablefmt="pretty"))
-            conn.post_entries(model, fitness, solution, RMSE, AUC, complexity, alg_name, self.iteration)
+            conn.post_entries(model, fitness, solution, CADL, complexity, alg_name, self.iteration)
             torch.save(model.state_dict(), path + f"/model.pt")
 
             return fitness
@@ -165,7 +155,7 @@ if __name__ == '__main__':
     print("=====================================SEARCH COMPLETED============================================")
 
     best_solution, best_algorithm = conn.best_results()
-    best_model = Autoencoder(best_solution, **config)
+    best_model = ConvAutoencoder(best_solution, **config)
     model_file = config['logging_params']['save_dir'] + f"{best_algorithm}_{best_model.hash_id}.pt"
     # https://pytorch.org/tutorials/beginner/saving_loading_models.html#saving-loading-model-for-inference
     torch.save(best_model.state_dict(), model_file)

@@ -14,32 +14,14 @@ from .transforms import *
 
 class Transformer_NYU2(Dataset):
     def __init__(self, csv_file, transform=None):
-        """INTERNET CODE"""
-
-        # TODO rename/replace to x_train
-        # TODO Add path to root folder
         csv_file_path = os.getcwd() + csv_file
         print(csv_file_path)
         self.paths = pd.read_csv(csv_file_path, header=None,
                                  names=['image', 'depth'])
 
         self.paths = self.paths.head(256)
-
         self.transform = transform
 
-        """END OF INTERNET CODE"""
-
-        # train_size = 0
-        # if x_train.shape[0] % batch_size == 0:
-        #     train_size = x_train.shape[0]
-        # else:
-        #     train_size = x_train.shape[0] - (x_train.shape[0] % batch_size)
-        #
-        # df_train = x_train.head(train_size)
-        # self.y_train = y_train
-        # self.y_train = torch.tensor(self.y_train[:].values)
-        # self.x_train = torch.tensor(df_train[:].values)
-        # https://stackoverflow.com/questions/50307707/convert-pandas-dataframe-to-pytorch-tensor
         super(Transformer_NYU2, self).__init__()
 
     def __len__(self):
@@ -66,7 +48,6 @@ class NYUDataset(LightningDataModule):
             train_size: int = 80,
             test_size: int = 10,
             val_size: int = 10,
-            anomaly_label: bool = True,
             **kwargs,
     ):
         super().__init__()
@@ -78,7 +59,6 @@ class NYUDataset(LightningDataModule):
         self.train_size = train_size
         self.test_size = test_size
         self.val_size = val_size
-        self.anomaly_label = anomaly_label
 
     def setup(self, stage: Optional[str] = None) -> None:
         __imagenet_pca = {
@@ -97,7 +77,7 @@ class NYUDataset(LightningDataModule):
                 Scale(240),
                 RandomHorizontalFlip(),
                 RandomRotate(5),
-                CenterCrop([304, 304], [152, 114]),
+                CenterCrop([304, 304], [304, 304]),
                 ToTensor(),
                 Lighting(0.1, __imagenet_pca[
                     'eigval'], __imagenet_pca['eigvec']),
@@ -148,7 +128,7 @@ class NYUDataset(LightningDataModule):
 
         return data
 
-    def test_dataloader(self) -> Union[DataLoader, List[DataLoader]]:
+    def test_dataloader(self) -> DataLoader:
         data = DataLoader(
             self.test_dataset,
             batch_size=self.batch_size,

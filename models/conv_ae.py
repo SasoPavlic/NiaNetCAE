@@ -1,42 +1,24 @@
 import hashlib
-import random
-import time
 
-import numpy as np
 import torch
 import torch.distributions
 import torch.nn as nn
-import torch.nn.functional as F
+import torch.optim as optim
 import torch.utils
-from tabulate import tabulate
+import torchmetrics.image
 
+from experiments.metrics import RMSELoss
 from models.base import BaseAutoencoder
 from models.types_ import *
-
-import os
-import urllib.request
-from urllib.error import HTTPError
-
-import lightning as L
-import matplotlib
-import matplotlib.pyplot as plt
-
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
-import torch.utils.data as data
-import torchvision
-from lightning.pytorch.callbacks import Callback, LearningRateMonitor, ModelCheckpoint
-from torch.utils.tensorboard import SummaryWriter
-from torchvision import transforms
-from torchvision.datasets import CIFAR10
-from tqdm.notebook import tqdm
+from lightning.pytorch import LightningModule
 
 
-class ConvAutoencoder(nn.Module):
-    def __init__(self):
+class ConvAutoencoder(BaseAutoencoder, LightningModule):
+    def __init__(self, solution, **kwargs):
         super(ConvAutoencoder, self).__init__()
+
+        tensor_dim = kwargs['model_params']['tensor_dim']
+        batch_size = kwargs['data_params']['batch_size']
 
         # Encoder
         self.encoding_layers = nn.ModuleList()
@@ -55,11 +37,12 @@ class ConvAutoencoder(nn.Module):
         self.decoding_layers.append(nn.ReLU(inplace=True))
         self.decoding_layers.append(nn.ConvTranspose2d(32, 16, kernel_size=3, stride=2, padding=1, output_padding=1))
         self.decoding_layers.append(nn.ReLU(inplace=True))
-        self.decoding_layers.append(nn.ConvTranspose2d(16, 3, kernel_size=3, stride=2, padding=1, output_padding=1))
+        self.decoding_layers.append(nn.ConvTranspose2d(16, 1, kernel_size=3, stride=2, padding=1, output_padding=1))
         self.decoding_layers.append(nn.ReLU(inplace=True))
 
+        # TODO Remove temporal assignments
         self.optimizer = optim.Adam(self.parameters(), lr=1e-3)
-        self.num_epochs = 3
+        self.num_epochs = kwargs['trainer_params']['max_epochs']
         self.hash_id = hashlib.sha1(str("ConvolutionalAutoencoder").encode('utf-8')).hexdigest()
         self.num_layers = 6
         self.bottleneck_size = 38
@@ -100,38 +83,44 @@ class ConvAutoencoder(nn.Module):
         reconstructed = decoded
         return reconstructed
 
-    def forward(self, input: Tensor, **kwargs) -> List[Tensor]:
+    def forward(self, input: Tensor, **kwargs) -> dict[str, list[Any] | Any]:
         """Flipping shape of tensors"""
 
-        z = self.encode(input)
-        reconstructed = self.decode(z)
+        image = input['image']
+        depth = input['depth']
 
-        return [reconstructed, input]
+        z = self.encode(input['image'])
+        output = self.decode(z)
 
-    def loss_function(self,
-                      *args,
-                      **kwargs) -> dict:
+        return dict({'input': image, 'depth': depth, 'output': output})
+
+    def loss_function(self, curr_device, **kwargs) -> dict:
         """
         Computes the AE loss function.
-        :param args:
         :param kwargs:
-        :return:
+        :return metrics:
         """
-        recons = args[0]
-        input = args[1]
+        criterionRMSE = RMSELoss()
+        l1_criterion = nn.L1Loss()
+        ssim = torchmetrics.image.StructuralSimilarityIndexMeasure().to(curr_device)
 
-        recons_loss = F.mse_loss(recons, input)
+        input = kwargs['input']
+        depth = kwargs['depth']
+        output = kwargs['output']
 
-        loss = recons_loss
+        loss_depth = torch.abs(torch.log(torch.abs(output - depth) + 0.5).mean())
+        loss_ssim = (1 - ssim(output, depth)) * 0.5
 
-        details = {'loss': loss, 'Reconstruction_Loss': recons_loss.detach()}
-        return details
+        loss_l1 = l1_criterion(output, depth)
+        loss_RMSE = criterionRMSE(output, depth)
 
-    def generate(self, x: Tensor, **kwargs) -> Tensor:
-        """
-        Given an input image x, returns the reconstructed image
-        :param x: (Tensor) [B x C x H x W]
-        :return: (Tensor) [B x C x H x W]
-        """
-        reconstructed, input = self.forward(x)
-        return [reconstructed, input]
+        loss = loss_depth + loss_ssim + loss_l1 + loss_RMSE
+
+        metrics = dict(
+            {'loss': loss,
+             'loss_depth': loss_depth,
+             'loss_ssim': loss_ssim,
+             'loss_l1': loss_l1,
+             'loss_RMSE': loss_RMSE})
+
+        return metrics
