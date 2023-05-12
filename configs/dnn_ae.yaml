@@ -1,24 +1,25 @@
 model_params:
-  name: 'Autoencoder'
-  seq_len: 60
-  n_features: 1
+  name: 'ConvAutoencoder'
+  tensor_dim: 304
 
 data_params:
-  anomaly_label: True
   data_path: "/data/"
-  batch_size: 64
+  image_height: 304
+  image_width: 304
   train_size: 0.65
   test_size: 0.25
   val_size: 0.10
+  batch_size: 64
   num_workers: 0
+  pin_memory: True
+
+trainer_params:
+  min_epochs: 1
+  max_epochs: 3
 
 exp_params:
   weight_decay: 0.0
   manual_seed: 1265
-
-trainer_params:
-  min_epochs: 1
-  max_epochs: 2
 
 early_stop:
   monitor: "loss"
