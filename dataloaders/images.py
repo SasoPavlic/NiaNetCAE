@@ -19,7 +19,7 @@ class Transformer_NYU2(Dataset):
         self.paths = pd.read_csv(csv_file_path, header=None,
                                  names=['image', 'depth'])
 
-        self.paths = self.paths.head(256)
+        #self.paths = self.paths.head(256)
         self.transform = transform
 
         super(Transformer_NYU2, self).__init__()

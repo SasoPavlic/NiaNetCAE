@@ -74,15 +74,16 @@ You can run the NiaNet script once your setup is complete.
 
 ##### Running NiaNet script with Docker:
 
-```docker build --tag spartan300/nianet:dnnae . ```
+```docker build --tag spartan300/nianet:conv . ```
 
 ```
 docker run \
-  --name=nianet-dnnae \
+  --name=nianet-convae \
   -it \
   -v $(pwd):/app/logs \
-  --gpus all spartan300/nianet:dnnae \
-  python ./dnn_ae_run.py
+  --gpus all spartan300/nianet:conv \
+  --ipc=host \
+  python ./cae_run.py
 ```
 
 ### HELP ⚠️

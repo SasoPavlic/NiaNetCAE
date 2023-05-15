@@ -9,7 +9,8 @@ from niapy.algorithms.basic import ParticleSwarmAlgorithm, DifferentialEvolution
 from niapy.algorithms.modified import SelfAdaptiveDifferentialEvolution
 from lightning.pytorch import seed_everything
 from lightning.pytorch.loggers import TensorBoardLogger
-from lightning.pytorch.callbacks import LearningRateMonitor, ModelCheckpoint, EarlyStopping
+from lightning.pytorch.callbacks import LearningRateMonitor, ModelCheckpoint, EarlyStopping, BatchSizeFinder, \
+    LearningRateFinder, RichModelSummary, RichProgressBar
 from lightning.pytorch import Trainer
 from tabulate import tabulate
 
@@ -18,6 +19,9 @@ from experiments.dnn_ae_experiment import DNNAEExperiment
 from models.conv_ae import ConvAutoencoder
 from niapy_extension.wrapper import *
 from storage.database import SQLiteConnector
+import warnings
+
+warnings.filterwarnings('ignore', category=UserWarning, message='TypedStorage is deprecated')
 
 RUN_UUID = uuid.uuid4().hex
 parser = argparse.ArgumentParser(description='Generic runner for DNN AE models')
@@ -46,6 +50,8 @@ early_stop_callback = EarlyStopping(monitor=config['early_stop']['monitor'],
 
 conn = SQLiteConnector(config['logging_params']['db_storage'], f"solutions")  # _{RUN_UUID}")
 seed_everything(config['exp_params']['manual_seed'], True)
+
+torch.set_float32_matmul_precision("medium")
 
 datamodule = NYUDataset(**config["data_params"])
 datamodule.setup()
@@ -89,8 +95,11 @@ class DNNAEArchitecture(ExtendedProblem):
                                  accelerator="cuda",
                                  devices=1,
                                  #auto_select_gpus=True,
+
                                  callbacks=[
                                      LearningRateMonitor(),
+                                     #BatchSizeFinder(),
+                                     #LearningRateFinder(attr_name="lr"),
                                      ModelCheckpoint(save_top_k=1,
                                                      dirpath=os.path.join(tb_logger.log_dir, "checkpoints"),
                                                      monitor="loss",
@@ -99,6 +108,8 @@ class DNNAEArchitecture(ExtendedProblem):
                                  ],
                                  # strategy=DDPPlugin(find_unused_parameters=False),
                                  **config['trainer_params'])
+
+
 
                 print(f"======= Training {config['model_params']['name']} =======")
                 print(f'\nTraining start: {datetime.now().strftime("%H:%M:%S-%d/%m/%Y")}')

@@ -6,7 +6,8 @@ from torch import optim
 from torchmetrics import MeanSquaredError
 
 from visualize import batch_to_image
-from experiments.metrics import ConvAutoencoderDepthLoss, RootMeanAbsoluteError, evaluateError, AbsoluteRelativeDifference, Log10Metric, \
+from experiments.metrics import ConvAutoencoderDepthLoss, RootMeanAbsoluteError, evaluateError, \
+    AbsoluteRelativeDifference, Log10Metric, \
     Delta1, Delta2, Delta3
 from models.base import BaseAutoencoder
 from visualize.batch_to_image import visualise_batch
@@ -23,6 +24,7 @@ class DNNAEExperiment(LightningModule):
         # self.save_hyperparameters(logger=False)
 
         self.model = conv_ae_model
+        self.hparams['lr'] = self.model.lr
         self.params = params
         self.tensor_dim = tensor_dim
         self.curr_device = None
@@ -55,39 +57,10 @@ class DNNAEExperiment(LightningModule):
         return self.model(input, **kwargs)
 
     def configure_optimizers(self):
-        optims = []
-        scheds = []
-
-        optimizer = self.model.optimizer
-        optims.append(optimizer)
-        # Check if more than 1 optimizer is required (Used for adversarial training)
-        try:
-            if self.params['LR_2'] is not None:
-                optimizer2 = optim.Adam(getattr(self.model, self.params['submodel']).parameters(),
-                                        lr=self.params['LR_2'])
-                optims.append(optimizer2)
-        except:
-            pass
-
-        try:
-            if self.params['scheduler_gamma'] is not None:
-                scheduler = optim.lr_scheduler.ExponentialLR(optims[0],
-                                                             gamma=self.params['scheduler_gamma'])
-                scheds.append(scheduler)
-
-                # Check if another scheduler is required for the second optimizer
-                try:
-                    if self.params['scheduler_gamma_2'] is not None:
-                        scheduler2 = optim.lr_scheduler.ExponentialLR(optims[1],
-                                                                      gamma=self.params['scheduler_gamma_2'])
-                        scheds.append(scheduler2)
-                except:
-                    pass
-                return optims, scheds
-        except:
-            return optims
+        return self.model.optimizer
 
     def training_step(self, batch, batch_idx, optimizer_idx=0):
+        torch.cuda.empty_cache()
         results = self.forward(batch)
         self.curr_device = batch['image'].device
         train_loss = self.model.loss_function(self.curr_device,
@@ -95,7 +68,8 @@ class DNNAEExperiment(LightningModule):
                                               optimizer_idx=optimizer_idx,
                                               batch_idx=batch_idx)
 
-        self.log_dict({key: val.item() for key, val in train_loss.items()}, prog_bar=True, sync_dist=True, on_step=False,
+        self.log_dict({key: val.item() for key, val in train_loss.items()}, prog_bar=True, sync_dist=True,
+                      on_step=False,
                       on_epoch=True, batch_size=batch['image'].shape[0])
 
         return train_loss['loss']
@@ -113,8 +87,8 @@ class DNNAEExperiment(LightningModule):
             finally:
                 results = self.forward(batch)
 
-                #TODO Remove when tested
-                #errors = evaluateError(results['output'], results['depth'])
+                # TODO Remove when tested
+                # errors = evaluateError(results['output'], results['depth'])
 
                 self.CADL_metric.to(self.curr_device)
 
@@ -137,12 +111,12 @@ class DNNAEExperiment(LightningModule):
                 self.DELTA3_metric.update(results['output'], results['depth'])
 
                 test_loss = self.model.loss_function(self.curr_device,
-                                                      **results,
-                                                      optimizer_idx=optimizer_idx,
-                                                      batch_idx=batch_idx)
+                                                     **results,
+                                                     optimizer_idx=optimizer_idx,
+                                                     batch_idx=batch_idx)
 
                 self.CADL_metric.update(test_loss)
-                #visualise_batch(**results)
+                # visualise_batch(**results)
 
         self.MSE_score = self.MSE_metric.compute()
         self.RMSE_score = self.RMSE_metric.compute()

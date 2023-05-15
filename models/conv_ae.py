@@ -41,7 +41,8 @@ class ConvAutoencoder(BaseAutoencoder, LightningModule):
         self.decoding_layers.append(nn.ReLU(inplace=True))
 
         # TODO Remove temporal assignments
-        self.optimizer = optim.Adam(self.parameters(), lr=1e-3)
+        self.optimizer = optim.Adam(self.parameters(), lr=0.017378008287493765)
+        self.lr = 0.017378008287493765
         self.num_epochs = kwargs['trainer_params']['max_epochs']
         self.hash_id = hashlib.sha1(str("ConvolutionalAutoencoder").encode('utf-8')).hexdigest()
         self.num_layers = 6

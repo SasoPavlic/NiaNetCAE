@@ -157,6 +157,9 @@ class Delta3(torchmetrics.Metric):
     def compute(self):
         return self.correct_count.float() / self.total_count
 
+
+#TODO Remove bellow once is tested
+
 def lg10(x):
     return torch.div(torch.log(x), math.log(10))
 
