@@ -11,4 +11,5 @@
 #SBATCH --gres=gpu:1
 #SBATCH --time=48:00:00
 
-singularity exec -e --pwd /app -B /ceph/grid/home/sasop/logs:/app/logs --nv docker://spartan300/nianet:dnnae python ./dnn_ae_run.py
+#singularity exec -e --pwd /app -B /ceph/grid/home/sasop/logs:/app/logs --nv docker://spartan300/nianet:dnnae python ./dnn_ae_run.py
+singularity exec -e --pwd /app/nianetcae -B /ceph/grid/home/sasop/logs:/app/nianetcae/logs --nv docker://spartan300/nianet:cae python cae_run.py

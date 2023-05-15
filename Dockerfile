@@ -14,20 +14,30 @@ FROM pytorchlightning/pytorch_lightning:base-cuda-py${PYTHON_VERSION}-torch${PYT
 
 LABEL maintainer="Lightning-AI <https://github.com/Lightning-AI>"
 
-
 WORKDIR /app
 
-COPY configs configs
-COPY data data
-COPY dataloaders dataloaders
-COPY experiments experiments
-COPY models models
-COPY niapy_extension niapy_extension
-COPY storage storage
+# To copy everythin in one layer:
+#COPY nianetcae /app/nianetcae
 
-COPY requirements.txt requirements.txt
-COPY cae_run.py /app
+# To copy in multiple layers:
+COPY nianetcae/configs /app/nianetcae/configs
+COPY nianetcae/data /app/nianetcae/data
+COPY nianetcae/dataloaders /app/nianetcae/dataloaders
+COPY nianetcae/experiments /app/nianetcae/experiments
+COPY nianetcae/models /app/nianetcae/models
+COPY nianetcae/niapy_extension /app/nianetcae/niapy_extension
+COPY nianetcae/storage /app/nianetcae/storage
+COPY nianetcae/visualize /app/nianetcae/visualize
 
+COPY nianetcae/__init__.py /app/nianetcae/__init__.py
+COPY nianetcae/cae_run.py /app/nianetcae/cae_run.py
+
+COPY requirements.txt /app/requirements.txt
+COPY setup.py /app/setup.py
+
+RUN pip3 install .
 RUN pip3 install -r requirements.txt
 RUN python -c "import torch ; print(torch.__version__)" >> torch_version.info
+
+WORKDIR /app/nianetcae
 

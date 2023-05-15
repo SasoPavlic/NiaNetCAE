@@ -170,7 +170,7 @@ class ToTensor(object):
         Returns:
             Tensor: Converted image.
         """
-        # ground truth depth of training samples is stored in 8-bit while test samples are saved in 16 bit
+        # ground truth depth of training samples is stored in 8-bit while nianetcae samples are saved in 16 bit
         image = self.to_tensor(image)
         if self.is_test:
             depth = self.to_tensor(depth).float() / 1000

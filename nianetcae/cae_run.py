@@ -1,5 +1,4 @@
 import argparse
-import math
 import uuid
 from pathlib import Path
 
@@ -9,16 +8,15 @@ from niapy.algorithms.basic import ParticleSwarmAlgorithm, DifferentialEvolution
 from niapy.algorithms.modified import SelfAdaptiveDifferentialEvolution
 from lightning.pytorch import seed_everything
 from lightning.pytorch.loggers import TensorBoardLogger
-from lightning.pytorch.callbacks import LearningRateMonitor, ModelCheckpoint, EarlyStopping, BatchSizeFinder, \
-    LearningRateFinder, RichModelSummary, RichProgressBar
+from lightning.pytorch.callbacks import LearningRateMonitor, ModelCheckpoint, EarlyStopping
 from lightning.pytorch import Trainer
 from tabulate import tabulate
 
-from dataloaders.images import NYUDataset
-from experiments.dnn_ae_experiment import DNNAEExperiment
-from models.conv_ae import ConvAutoencoder
-from niapy_extension.wrapper import *
-from storage.database import SQLiteConnector
+from nianetcae.dataloaders.images import NYUDataset
+from nianetcae.experiments.dnn_ae_experiment import DNNAEExperiment
+from nianetcae.models.conv_ae import ConvAutoencoder
+from nianetcae.niapy_extension.wrapper import *
+from nianetcae.storage.database import SQLiteConnector
 import warnings
 
 warnings.filterwarnings('ignore', category=UserWarning, message='TypedStorage is deprecated')
@@ -29,7 +27,7 @@ parser.add_argument('--config', '-c',
                     dest="filename",
                     metavar='FILE',
                     help='path to the config file',
-                    default='configs/dnn_ae.yaml')
+                    default='configs/main_config.yaml')
 
 args = parser.parse_args()
 with open(args.filename, 'r') as file:

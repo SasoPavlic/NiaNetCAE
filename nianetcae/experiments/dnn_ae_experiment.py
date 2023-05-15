@@ -2,28 +2,21 @@ import torch
 import torchmetrics
 from lightning.pytorch import LightningModule
 from torch import Tensor
-from torch import optim
-from torchmetrics import MeanSquaredError
 
-from visualize import batch_to_image
-from experiments.metrics import ConvAutoencoderDepthLoss, RootMeanAbsoluteError, evaluateError, \
-    AbsoluteRelativeDifference, Log10Metric, \
+from nianetcae.experiments.metrics import ConvAutoencoderDepthLoss, RootMeanAbsoluteError, AbsoluteRelativeDifference, Log10Metric, \
     Delta1, Delta2, Delta3
-from models.base import BaseAutoencoder
-from visualize.batch_to_image import visualise_batch
+from nianetcae.models.base import BaseAutoencoder
+from nianetcae.models.conv_ae import ConvAutoencoder
 
 
 class DNNAEExperiment(LightningModule):
-    def __init__(self,
-                 conv_ae_model: BaseAutoencoder,
-                 params: dict,
-                 tensor_dim: int) -> None:
+    def __init__(self, conv_autoencoder: ConvAutoencoder, params: dict, tensor_dim: int) -> None:
         super(DNNAEExperiment, self).__init__()
 
         # https://github.com/Lightning-AI/lightning/issues/4390#issuecomment-717447779
         # self.save_hyperparameters(logger=False)
 
-        self.model = conv_ae_model
+        self.model = conv_autoencoder
         self.hparams['lr'] = self.model.lr
         self.params = params
         self.tensor_dim = tensor_dim
