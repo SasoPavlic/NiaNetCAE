@@ -15,7 +15,7 @@ data_params:
 
 trainer_params:
   min_epochs: 1
-  max_epochs: 3
+  max_epochs: 100
 
 exp_params:
   weight_decay: 0.0
@@ -23,7 +23,7 @@ exp_params:
 
 early_stop:
   monitor: "loss"
-  patience: 1
+  patience: 100
   min_delta: 0.00
 
 logging_params:
