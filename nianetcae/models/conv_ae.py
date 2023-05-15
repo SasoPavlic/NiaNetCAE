@@ -7,13 +7,13 @@ import torch.optim as optim
 import torch.utils
 import torchmetrics.image
 
-from experiments.metrics import RMSELoss
-from models.base import BaseAutoencoder
-from models.types_ import *
+from nianetcae.experiments.metrics import RMSELoss
+from nianetcae.models.base import BaseAutoencoder
+from nianetcae.models.types_ import *
 from lightning.pytorch import LightningModule
 
 
-class ConvAutoencoder(BaseAutoencoder, LightningModule):
+class ConvAutoencoder(BaseAutoencoder, nn.Module):
     def __init__(self, solution, **kwargs):
         super(ConvAutoencoder, self).__init__()
 
@@ -95,7 +95,7 @@ class ConvAutoencoder(BaseAutoencoder, LightningModule):
 
         return dict({'input': image, 'depth': depth, 'output': output})
 
-    def loss_function(self, curr_device, **kwargs) -> dict:
+    def loss_function(self, curr_device: str = 'cuda', **kwargs) -> dict:
         """
         Computes the AE loss function.
         :param kwargs:

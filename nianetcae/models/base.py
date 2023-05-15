@@ -2,7 +2,7 @@ from abc import abstractmethod
 
 from torch import nn
 
-from models.types_ import *
+from nianetcae.models.types_ import *
 
 
 class BaseAutoencoder(nn.Module):

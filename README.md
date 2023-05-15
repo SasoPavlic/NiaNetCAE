@@ -41,7 +41,7 @@ The purpose of this paper is to get an understanding of the first version of the
 
 ### Examples
 
-Usage examples can be found [here](experiments).
+Usage examples can be found [here](nianetcae/experiments).
 
 ### Getting started 🔨
 
@@ -74,16 +74,16 @@ You can run the NiaNet script once your setup is complete.
 
 ##### Running NiaNet script with Docker:
 
-```docker build --tag spartan300/nianet:conv . ```
+```docker build --tag spartan300/nianet:cae . ```
 
 ```
 docker run \
-  --name=nianet-convae \
+  --name=nianet-cae \
   -it \
-  -v $(pwd):/app/logs \
-  --gpus all spartan300/nianet:conv \
-  --ipc=host \
-  python ./cae_run.py
+  -v $(pwd):/app/nianetcae/logs \
+  --shm-size 8G \
+  --gpus all spartan300/nianet:cae \
+  python cae_run.py
 ```
 
 ### HELP ⚠️

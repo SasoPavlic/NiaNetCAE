@@ -41,8 +41,8 @@ class Transformer_NYU2(Dataset):
 class NYUDataset(LightningDataModule):
     def __init__(
             self,
-            data_path: str,
-            batch_size: int = 1,
+            data_path: str = '/data/',
+            batch_size: int = 64,
             num_workers: int = 16,
             pin_memory: bool = False,
             train_size: int = 80,
