@@ -10,21 +10,16 @@ data_params:
   test_size: 0.25
   val_size: 0.10
   batch_size: 64
-  num_workers: 0
+  num_workers: 16
   pin_memory: True
 
 trainer_params:
   min_epochs: 1
-  max_epochs: 100
+  max_epochs: 2
 
 exp_params:
   weight_decay: 0.0
   manual_seed: 1265
-
-early_stop:
-  monitor: "loss"
-  patience: 10
-  min_delta: 0.00
 
 logging_params:
   name: "Autoencoder"
