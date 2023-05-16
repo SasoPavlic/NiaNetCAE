@@ -6,7 +6,7 @@
 [![Downloads](https://static.pepy.tech/badge/nianet)](https://pepy.tech/project/nianet)
 [![GitHub license](https://img.shields.io/badge/license-MIT-green)](https://github.com/SasoPavlic/NiaNet/blob/main/LICENSE)
 
-### Designing and constructing convolutional autoencoder architecture using nature-inspired algorithms - powered by high performance computer (HPC)
+### Nature-Inspired Algorithm-driven Convolutional Autoencoder Architecture search: Empowered by High-Performance Computing (HPC)
 <p align="center"><img src=".github/search-space.webp" alt="Search space" title="Discovering search space" width="50%" /></p>
 
 ### Description 📝
