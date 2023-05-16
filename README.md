@@ -91,6 +91,33 @@ docker run \
   python main.py
 ```
 
+##### Running NiaNetCAE script with Poetry [help](https://github.com/python-poetry/poetry/issues/4231#issuecomment-1182766775):
+1. Run the installation via ```poetry install ```
+2. Then run the task with```poetry run poe autoinstall-torch-cuda```
+
+##### Running NiaNetCAE script with HPC SLURM:
+
+1. First build an image with docker (above example)
+2. Docker push to Docker Hub: ```docker push username/nianetcae:latest```
+3. SSH into a HPC Cluster via your access credentials
+4. Create the following _run.sh_ script: ```cat > run.sh```
+```
+#!/bin/bash
+#SBATCH -J nianet-cae
+#SBATCH -o nianet-cae-%j.out
+#SBATCH -e nianet-cae-%j.err
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --partition=gpu
+#SBATCH --mem-per-gpu=32GB
+#SBATCH --gres=gpu:1
+#SBATCH --time=72:00:00
+
+singularity exec -e --pwd /app -B /ceph/grid/home/sasop/logs:/app/logs --nv docker://spartan300/nianet:cae python main.py
+```
+1. Make script executable: ```chmod +x run.sh```
+3. Submit your script to a job scheduler: ```SBATCH run.sh```
+
 ### HELP ⚠️
 
 **saso.pavlic@student.um.si**
