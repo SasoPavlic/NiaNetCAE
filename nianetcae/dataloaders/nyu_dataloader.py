@@ -9,10 +9,10 @@ from lightning.pytorch.utilities.data import DataLoader
 
 from torchvision import transforms
 
-from .transforms import *
+from .nyu_transformer import *
 
 
-class Transformer_NYU2(Dataset):
+class DatasetLoader(Dataset):
     def __init__(self, csv_file, transform=None):
         csv_file_path = os.getcwd() + csv_file
         print(csv_file_path)
@@ -22,7 +22,7 @@ class Transformer_NYU2(Dataset):
         #self.paths = self.paths.head(256)
         self.transform = transform
 
-        super(Transformer_NYU2, self).__init__()
+        super(DatasetLoader, self).__init__()
 
     def __len__(self):
         return len(self.paths)
@@ -91,7 +91,7 @@ class NYUDataset(LightningDataModule):
 
             ]
         )
-        self.train_dataset = Transformer_NYU2(
+        self.train_dataset = DatasetLoader(
             csv_file=self.data_path + "nyu2_train.csv",
             transform=train_transform)
 
@@ -109,7 +109,7 @@ class NYUDataset(LightningDataModule):
 
         )
 
-        self.test_dataset = Transformer_NYU2(
+        self.test_dataset = DatasetLoader(
             csv_file=self.data_path + "nyu2_test.csv",
             transform=test_transform)
 
