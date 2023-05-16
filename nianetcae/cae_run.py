@@ -89,8 +89,6 @@ class CONVAEArchitecture(ExtendedProblem):
 
 
 def solve_architecture_problem():
-    print(f'Program start: {datetime.now().strftime("%H:%M:%S-%d/%m/%Y")}')
-    print(f"RUN UUID: {RUN_UUID}")
     """
     Dimensionality:
     y1: topology shape,
@@ -131,4 +129,3 @@ def solve_architecture_problem():
     # https://pytorch.org/tutorials/beginner/saving_loading_models.html#saving-loading-model-for-inference
     torch.save(best_model.state_dict(), model_file)
     print(f"Best model saved to: {model_file}")
-    print(f'\n Program end: {datetime.now().strftime("%H:%M:%S-%d/%m/%Y")}')
