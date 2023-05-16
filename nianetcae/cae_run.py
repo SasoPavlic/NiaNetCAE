@@ -1,61 +1,25 @@
-import argparse
-import uuid
 from pathlib import Path
 
 import torch
-import yaml
+
 from niapy.algorithms.basic import ParticleSwarmAlgorithm, DifferentialEvolution, FireflyAlgorithm, GeneticAlgorithm
 from niapy.algorithms.modified import SelfAdaptiveDifferentialEvolution
-from lightning.pytorch import seed_everything
+
 from lightning.pytorch.loggers import TensorBoardLogger
-from lightning.pytorch.callbacks import LearningRateMonitor, ModelCheckpoint, EarlyStopping
+from lightning.pytorch.callbacks import LearningRateMonitor, ModelCheckpoint
 from lightning.pytorch import Trainer
 from tabulate import tabulate
 
-from nianetcae.dataloaders.images import NYUDataset
 from nianetcae.experiments.dnn_ae_experiment import DNNAEExperiment
 from nianetcae.models.conv_ae import ConvAutoencoder
 from nianetcae.niapy_extension.wrapper import *
-from nianetcae.storage.database import SQLiteConnector
-import warnings
 
-warnings.filterwarnings('ignore', category=UserWarning, message='TypedStorage is deprecated')
+RUN_UUID = None
+config = None
+conn = None
+datamodule = None
 
-RUN_UUID = uuid.uuid4().hex
-parser = argparse.ArgumentParser(description='Generic runner for DNN AE models')
-parser.add_argument('--config', '-c',
-                    dest="filename",
-                    metavar='FILE',
-                    help='path to the config file',
-                    default='configs/main_config.yaml')
-
-args = parser.parse_args()
-with open(args.filename, 'r') as file:
-    try:
-        config = yaml.safe_load(file)
-    except yaml.YAMLError as exc:
-        print(exc)
-
-config['logging_params']['save_dir'] += RUN_UUID + '/'
-Path(config['logging_params']['save_dir']).mkdir(parents=True, exist_ok=True)
-
-early_stop_callback = EarlyStopping(monitor=config['early_stop']['monitor'],
-                                    min_delta=config['early_stop']['min_delta'],
-                                    patience=config['early_stop']['patience'],
-                                    verbose=False,
-                                    check_finite=True,
-                                    mode="max")
-
-conn = SQLiteConnector(config['logging_params']['db_storage'], f"solutions")  # _{RUN_UUID}")
-seed_everything(config['exp_params']['manual_seed'], True)
-
-torch.set_float32_matmul_precision("medium")
-
-datamodule = NYUDataset(**config["data_params"])
-datamodule.setup()
-
-
-class DNNAEArchitecture(ExtendedProblem):
+class CONVAEArchitecture(ExtendedProblem):
 
     def __init__(self, dimension):
         super().__init__(dimension=dimension, lower=0, upper=1)
@@ -92,22 +56,19 @@ class DNNAEArchitecture(ExtendedProblem):
                                  enable_progress_bar=True,
                                  accelerator="cuda",
                                  devices=1,
-                                 #auto_select_gpus=True,
+                                 # auto_select_gpus=True,
 
                                  callbacks=[
                                      LearningRateMonitor(),
-                                     #BatchSizeFinder(),
-                                     #LearningRateFinder(attr_name="lr"),
+                                     # BatchSizeFinder(),
+                                     # LearningRateFinder(attr_name="lr"),
                                      ModelCheckpoint(save_top_k=1,
                                                      dirpath=os.path.join(tb_logger.log_dir, "checkpoints"),
                                                      monitor="loss",
-                                                     save_last=True),
-                                     early_stop_callback,
+                                                     save_last=True)
                                  ],
                                  # strategy=DDPPlugin(find_unused_parameters=False),
                                  **config['trainer_params'])
-
-
 
                 print(f"======= Training {config['model_params']['name']} =======")
                 print(f'\nTraining start: {datetime.now().strftime("%H:%M:%S-%d/%m/%Y")}')
@@ -127,7 +88,7 @@ class DNNAEArchitecture(ExtendedProblem):
             return fitness
 
 
-if __name__ == '__main__':
+def solve_architecture_problem():
     print(f'Program start: {datetime.now().strftime("%H:%M:%S-%d/%m/%Y")}')
     print(f"RUN UUID: {RUN_UUID}")
     """
@@ -155,7 +116,7 @@ if __name__ == '__main__':
             GeneticAlgorithm()
         ],
         problems=[
-            DNNAEArchitecture(DIMENSIONALITY)
+            CONVAEArchitecture(DIMENSIONALITY)
         ]
     )
 
@@ -163,6 +124,7 @@ if __name__ == '__main__':
     final_solutions = runner.run(export='json', verbose=True)
     print("=====================================SEARCH COMPLETED============================================")
 
+    print(f"Solutions: {final_solutions}")
     best_solution, best_algorithm = conn.best_results()
     best_model = ConvAutoencoder(best_solution, **config)
     model_file = config['logging_params']['save_dir'] + f"{best_algorithm}_{best_model.hash_id}.pt"

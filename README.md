@@ -6,7 +6,8 @@
 [![Downloads](https://static.pepy.tech/badge/nianet)](https://pepy.tech/project/nianet)
 [![GitHub license](https://img.shields.io/badge/license-MIT-green)](https://github.com/SasoPavlic/NiaNet/blob/main/LICENSE)
 
-### Designing and constructing neural network topologies using nature-inspired algorithms - powered by high performance computer (HPC)
+### Designing and constructing convolutional autoencoder architecture using nature-inspired algorithms - powered by high performance computer (HPC)
+<p align="center"><img src=".github/search-space.webp" alt="Search space" title="Discovering search space" width="50%" /></p>
 
 ### Description 📝
 
@@ -19,12 +20,12 @@ in the library [NiaPy](https://github.com/NiaOrg/NiaPy) to navigate efficiently 
 * **Construct novel AE's architecture** using nature-inspired algorithms.
 * * number of solutions = topology shape * layer step * layers * act. func. * epochs * lr * optimizers
 * * 3,456,000,000 = 2 * 60 * 60 * 8 * 100 * 100 * 6 
-* It can be utilized for **any kind of dataset**, which has **numerical** values.
-* Detect anomalies in data
+* It can be utilized for **any kind of dataset**, which has **3D images** values.
+* Estimate the depth of the image
 
 ### Installation ✅
 
-Installing NiaNetHPC with pip3:
+Installing NiaNetCAE with pip3:
 
 TODO: Publish it to PyPi
 
@@ -34,30 +35,33 @@ pip3 install nianet-hpc
 
 ### Documentation 📘
 
-The purpose of this paper is to get an understanding of the first version of the NiaNet approach (without HPC).
+The purpose of this paper is to get an understanding of the NiaNetCAE approach (without HPC).
 
-**Annals of Computer Science and Information Systems, Volume 30:**
-[NiaNet: A framework for constructing Autoencoder architectures using nature-inspired algorithms](https://www.sasopavlic.com/publication/nianet-a-framework-for-constructing-autoencoder-architectures-using-nat-ure-inspired-algorithms/)
+**TODO - Future Journal:**
+[NiaNetCAE for depth estimation](https://www.sasopavlic.com/)
 
 ### Examples
 
-Usage examples can be found [here](nianetcae/experiments).
+Usage examples can be found [here](nianetcae/experiments). Currently there is an example for finding the appropriate Convolutional Autoencoder for depth estimation on NYU2 Dataset.
 
 ### Getting started 🔨
 
 ##### Create your own example:
 
-* TODO Add description for making your own example.
+1. Replace the dataset in [data](data) folder.
+2. Modify the parameters in [main_config.py](configs/main_config.yaml)
+2. Adjust the dataloader logic in [dataloaders](nianetcae/dataloaders) folder.
+3. Specify the search space in [conv_ae.py](nianetcae/models/conv_ae.py) from your problem domain.
+3. Redesign the fitness function in [cae_run.py](nianetcae/cae_run.py) based on your optimization.
 
-##### Change dataset:
+##### Changing dataset:
 
-Change the dataset import function as follows:
+Once the dataset is changed, dataloaders needs to be modified to be able for forwarding new shape of data to models.
 
-* TODO Add description for dataloader and config file.
 
 ##### Specify the search space:
 
-Set the boundaries of your search space with [autoencoder.py](nianet/autoencoder.py).
+Set the boundaries of your search space with [conv_ae.py](nianetcae/models/conv_ae.py).
 
 The following dimensions can be modified:
 
@@ -70,9 +74,9 @@ The following dimensions can be modified:
 * Learning rate
 * Optimizer
 
-You can run the NiaNet script once your setup is complete.
+You can run the NiaNetCAE script once your setup is complete.
 
-##### Running NiaNet script with Docker:
+##### Running NiaNetCAE script with Docker:
 
 ```docker build --tag spartan300/nianet:cae . ```
 
@@ -81,9 +85,10 @@ docker run \
   --name=nianet-cae \
   -it \
   -v $(pwd):/app/nianetcae/logs \
+  -w="/app" \
   --shm-size 8G \
   --gpus all spartan300/nianet:cae \
-  python cae_run.py
+  python main.py
 ```
 
 ### HELP ⚠️
@@ -92,8 +97,10 @@ docker run \
 
 ## Acknowledgments 🎓
 
-* NiaNet was developed under the supervision of [doc. dr Iztok Fister ml.](http://www.iztok-jr-fister.eu/)
-  at [University of Maribor](https://www.um.si/en/home-page/).
+* NiaNetCAE was developed under the supervision of [prof. dr. Domenec Puig](https://scholar.google.es/citations?hl=en&user=2lmYVYAAAAAJ&view_op=list_works&sortby=pubdate)
+  at [University Rovira i Virgili](https://www.urv.cat/en/).
+* Together with [dr. Saddam Abdulwahab](https://scholar.google.es/citations?user=6YE5eu4AAAAJ&hl=en) at [University Rovira i Virgili](https://www.urv.cat/en/)
+
 
 * This code is a fork of [NiaPy](https://github.com/NiaOrg/NiaPy). I am grateful that the authors chose to open-source
   their work for future use.

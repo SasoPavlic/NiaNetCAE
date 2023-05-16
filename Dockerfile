@@ -7,7 +7,6 @@
 ARG PYTHON_VERSION=3.10
 ARG PYTORCH_VERSION=2.0
 ARG CUDA_VERSION=11.7.1
-ARG LIGHTNING_VERSION=""
 
 FROM pytorchlightning/pytorch_lightning:base-cuda-py${PYTHON_VERSION}-torch${PYTORCH_VERSION}-cuda${CUDA_VERSION}
 #FROM pytorchlightning/pytorch_lightning:base-cuda-py3.10-torch2.0-cuda11.7.1
@@ -20,8 +19,8 @@ WORKDIR /app
 #COPY nianetcae /app/nianetcae
 
 # To copy in multiple layers:
-COPY nianetcae/configs /app/nianetcae/configs
-COPY nianetcae/data /app/nianetcae/data
+COPY configs /app/configs
+COPY data /app/data
 COPY nianetcae/dataloaders /app/nianetcae/dataloaders
 COPY nianetcae/experiments /app/nianetcae/experiments
 COPY nianetcae/models /app/nianetcae/models
@@ -34,10 +33,8 @@ COPY nianetcae/cae_run.py /app/nianetcae/cae_run.py
 
 COPY requirements.txt /app/requirements.txt
 COPY setup.py /app/setup.py
+COPY main.py /app/main.py
 
 RUN pip3 install .
 RUN pip3 install -r requirements.txt
 RUN python -c "import torch ; print(torch.__version__)" >> torch_version.info
-
-WORKDIR /app/nianetcae
-
