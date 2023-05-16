@@ -1,4 +1,3 @@
-import warnings
 import uuid
 from datetime import datetime
 
@@ -18,10 +17,8 @@ if __name__ == '__main__':
     RUN_UUID = uuid.uuid4().hex
     print(f'Program start: {datetime.now().strftime("%H:%M:%S-%d/%m/%Y")}')
     print(f"RUN UUID: {RUN_UUID}")
-    warnings.filterwarnings('ignore', category=UserWarning, message='TypedStorage is deprecated')
+
     torch.set_float32_matmul_precision("medium")
-
-
     parser = argparse.ArgumentParser(description='Generic runner for DNN AE models')
     parser.add_argument('--config', '-c',
                         dest="filename",
