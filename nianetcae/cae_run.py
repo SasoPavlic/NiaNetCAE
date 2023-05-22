@@ -47,7 +47,7 @@ class CONVAEArchitecture(ExtendedProblem):
             if len(model.encoding_layers) == 0 or len(model.decoding_layers) == 0:
                 CADL = int(9e10)
             else:
-                experiment = DNNAEExperiment(model, config['exp_params'], config['model_params']['tensor_dim'])
+                experiment = DNNAEExperiment(model, config['exp_params'], config['data_params']['horizontal_dim'])
                 config['trainer_params']['max_epochs'] = model.num_epochs
                 tb_logger = TensorBoardLogger(save_dir=config['logging_params']['save_dir'],
                                               name=str(self.iteration) + "_" + alg_name + "_" + model.hash_id)
@@ -56,6 +56,7 @@ class CONVAEArchitecture(ExtendedProblem):
                                  enable_progress_bar=True,
                                  accelerator="cuda",
                                  devices=1,
+                                 log_every_n_steps=32,
                                  # auto_select_gpus=True,
 
                                  callbacks=[

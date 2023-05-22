@@ -1,21 +1,25 @@
 model_params:
   name: 'ConvAutoencoder'
-  tensor_dim: 304
+  kernel_size: 3
+  stride: 2
+  padding: 1
+  output_padding: 1
 
 data_params:
   data_path: "/data/"
-  image_height: 304
-  image_width: 304
+  channel_dim: 3
+  horizontal_dim: 304
+  vertical_dim: 304
   train_size: 0.65
   test_size: 0.25
   val_size: 0.10
-  batch_size: 64
-  num_workers: 16
+  batch_size: 4
+  num_workers: 0
   pin_memory: True
 
 trainer_params:
   min_epochs: 1
-  max_epochs: 2
+  max_epochs: 8
 
 exp_params:
   weight_decay: 0.0

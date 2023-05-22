@@ -8,6 +8,7 @@ import torchmetrics
 from torch import tensor, Tensor, nn
 from torch.autograd import Variable
 
+
 class RMSELoss(nn.Module):
     def __init__(self):
         super().__init__()
@@ -40,6 +41,7 @@ class RootMeanAbsoluteError(torchmetrics.Metric):
         """Computes mean squared error over state."""
         return torch.sqrt(self.sum_squared_error / self.n_observations)
 
+
 class AbsoluteRelativeDifference(torchmetrics.Metric):
     def __init__(self):
         super().__init__()
@@ -56,11 +58,11 @@ class AbsoluteRelativeDifference(torchmetrics.Metric):
     def compute(self):
         return self.abs_rel_sum / self.total_count
 
+
 class ConvAutoencoderDepthLoss(torchmetrics.Metric):
     # https: // www.pytorchlightning.ai / blog / torchmetrics - pytorch - metrics - built - to - scale
-    def __init__(self, **kwargs: Any, ) -> None:
-        super().__init__(**kwargs)
-
+    def __init__(self):
+        super().__init__()
         self.add_state("sum_error", default=tensor(0.0), dist_reduce_fx="sum")
 
     def update(self, batch_loss: Tensor) -> None:  # type: ignore
@@ -70,11 +72,12 @@ class ConvAutoencoderDepthLoss(torchmetrics.Metric):
             batch_loss: Predictions from model for a given batch
         """
 
-        self.sum_error += torch.sum(batch_loss['loss'])
+        self.sum_error += torch.sum(batch_loss)
 
     def compute(self) -> Tensor:
         """Computes mean squared error over state."""
         return self.sum_error
+
 
 class Log10Metric(torchmetrics.Metric):
     def __init__(self):
@@ -91,8 +94,9 @@ class Log10Metric(torchmetrics.Metric):
     def compute(self):
         return self.log10_sum / self.total_count
 
+
 class Delta1(torchmetrics.Metric):
-    #https://discuss.pytorch.org/t/what-does-1-25-1-25-1-25-delta-1-25-stand-for/174841
+    # https://discuss.pytorch.org/t/what-does-1-25-1-25-1-25-delta-1-25-stand-for/174841
     def __init__(self, threshold=1.25):
         super().__init__()
         self.threshold = threshold
@@ -113,8 +117,9 @@ class Delta1(torchmetrics.Metric):
     def compute(self):
         return self.correct_count.float() / self.total_count
 
+
 class Delta2(torchmetrics.Metric):
-    #https://discuss.pytorch.org/t/what-does-1-25-1-25-1-25-delta-1-25-stand-for/174841
+    # https://discuss.pytorch.org/t/what-does-1-25-1-25-1-25-delta-1-25-stand-for/174841
     def __init__(self, threshold=1.25):
         super().__init__()
         self.threshold = threshold
@@ -125,7 +130,7 @@ class Delta2(torchmetrics.Metric):
         # Calculate the absolute difference between predictions and targets
         abs_diff = torch.abs(preds - target)
         # Calculate the mask indicating which samples satisfy the Delta1 criterion
-        mask = (abs_diff <= math.pow(self.threshold,2))
+        mask = (abs_diff <= math.pow(self.threshold, 2))
         # Count the number of correct predictions
         correct_count = torch.sum(mask)
         # Update the state variables
@@ -134,9 +139,10 @@ class Delta2(torchmetrics.Metric):
 
     def compute(self):
         return self.correct_count.float() / self.total_count
+
 
 class Delta3(torchmetrics.Metric):
-    #https://discuss.pytorch.org/t/what-does-1-25-1-25-1-25-delta-1-25-stand-for/174841
+    # https://discuss.pytorch.org/t/what-does-1-25-1-25-1-25-delta-1-25-stand-for/174841
     def __init__(self, threshold=1.25):
         super().__init__()
         self.threshold = threshold
@@ -147,7 +153,7 @@ class Delta3(torchmetrics.Metric):
         # Calculate the absolute difference between predictions and targets
         abs_diff = torch.abs(preds - target)
         # Calculate the mask indicating which samples satisfy the Delta1 criterion
-        mask = (abs_diff <= math.pow(self.threshold,3))
+        mask = (abs_diff <= math.pow(self.threshold, 3))
         # Count the number of correct predictions
         correct_count = torch.sum(mask)
         # Update the state variables
@@ -158,10 +164,11 @@ class Delta3(torchmetrics.Metric):
         return self.correct_count.float() / self.total_count
 
 
-#TODO Remove bellow once is tested
+# TODO Remove bellow once is tested
 
 def lg10(x):
     return torch.div(torch.log(x), math.log(10))
+
 
 def maxOfTwo(x, y):
     z = x.clone()
@@ -169,14 +176,18 @@ def maxOfTwo(x, y):
     z[maskYLarger.detach()] = y[maskYLarger.detach()]
     return z
 
+
 def nValid(x):
     return torch.sum(torch.eq(x, x).float())
+
 
 def nNanElement(x):
     return torch.sum(torch.ne(x, x).float())
 
+
 def getNanMask(x):
     return torch.ne(x, x)
+
 
 def setNanToZero(input, target):
     target = target.movedim(2, -1)
@@ -191,9 +202,10 @@ def setNanToZero(input, target):
 
     return _input, _target, nanMask, nValidElement
 
+
 def evaluateError(output, target):
     errors = {'MSE': 0, 'RMSE': 0, 'ABS_REL': 0, 'LG10': 0,
-              'MAE': 0,  'DELTA1': 0, 'DELTA2': 0, 'DELTA3': 0}
+              'MAE': 0, 'DELTA1': 0, 'DELTA2': 0, 'DELTA3': 0}
 
     _output, _target, nanMask, nValidElement = setNanToZero(output, target)
 

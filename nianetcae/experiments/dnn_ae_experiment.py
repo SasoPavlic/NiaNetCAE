@@ -17,7 +17,7 @@ class DNNAEExperiment(LightningModule):
         # self.save_hyperparameters(logger=False)
 
         self.model = conv_autoencoder
-        self.hparams['lr'] = self.model.lr
+        self.hparams['lr'] = self.model.learning_rate
         self.params = params
         self.tensor_dim = tensor_dim
         self.curr_device = None
@@ -108,7 +108,7 @@ class DNNAEExperiment(LightningModule):
                                                      optimizer_idx=optimizer_idx,
                                                      batch_idx=batch_idx)
 
-                self.CADL_metric.update(test_loss)
+                self.CADL_metric.update(test_loss['loss'])
                 # visualise_batch(**results)
 
         self.MSE_score = self.MSE_metric.compute()
