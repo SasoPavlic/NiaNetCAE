@@ -19,7 +19,7 @@ class DatasetLoader(Dataset):
         self.paths = pd.read_csv(csv_file_path, header=None,
                                  names=['image', 'depth'])
 
-        #self.paths = self.paths.head(256)
+        self.paths = self.paths.head(16)
         self.transform = transform
 
         super(DatasetLoader, self).__init__()

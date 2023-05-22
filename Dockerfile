@@ -38,3 +38,4 @@ COPY main.py /app/main.py
 RUN pip3 install .
 RUN pip3 install -r requirements.txt
 RUN python -c "import torch ; print(torch.__version__)" >> torch_version.info
+#CMD [ "python" , "main.py"]
