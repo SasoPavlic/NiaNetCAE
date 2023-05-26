@@ -8,8 +8,10 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.12"
-setuptools = "^67.7.2"
+setuptools = "^67.8.0"
 pyyaml = "^6.0"
+#torch = "^2.0.1"
+#poethepoet = "*"
 torch = "*"
 poethepoet = "*"
 torchvision = "^0.15.2"
@@ -24,6 +26,7 @@ niapy = "^2.0.5"
 lightning = "^2.0.2"
 pillow = "^9.5.0"
 tensorboard = "^2.13.0"
+pytest = "^7.3.1"
 
 
 [build-system]

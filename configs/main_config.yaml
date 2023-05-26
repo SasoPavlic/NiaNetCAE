@@ -19,13 +19,13 @@ data_params:
 
 trainer_params:
   min_epochs: 1
-  max_epochs: 8
+  max_epochs: 2
 
 exp_params:
   weight_decay: 0.0
   manual_seed: 1265
 
 logging_params:
-  name: "Autoencoder"
+  name: "ConvAutoencoder"
   save_dir: "logs/"
   db_storage: "logs/solution.db"

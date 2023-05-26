@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/NiaNetAD.iml" filepath="$PROJECT_DIR$/.idea/NiaNetAD.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/NiaNetCAE.iml" filepath="$PROJECT_DIR$/.idea/NiaNetCAE.iml" />
     </modules>
   </component>
 </project>

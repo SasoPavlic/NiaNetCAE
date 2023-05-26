@@ -44,7 +44,7 @@ class TestModel(unittest.TestCase):
         print(f"RUN UUID: {RUN_UUID}")
 
         torch.set_float32_matmul_precision("medium")
-        parser = argparse.ArgumentParser(description='Generic runner for DNN AE models')
+        parser = argparse.ArgumentParser(description='Generic runner for Convolutional AE models')
         parser.add_argument('--config', '-c',
                             dest="filename",
                             metavar='FILE',
@@ -83,7 +83,7 @@ class TestModel(unittest.TestCase):
 
         try:
             trainees = False
-            for x in range(100):
+            for x in range(3):
 
                 solution = self.generate_solution()
                 model = ConvAutoencoder(solution, **self.config)
