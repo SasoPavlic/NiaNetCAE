@@ -19,7 +19,7 @@ if __name__ == '__main__':
     print(f"RUN UUID: {RUN_UUID}")
 
     torch.set_float32_matmul_precision("medium")
-    parser = argparse.ArgumentParser(description='Generic runner for DNN AE models')
+    parser = argparse.ArgumentParser(description='Generic runner for Convolutional AE models')
     parser.add_argument('--config', '-c',
                         dest="filename",
                         metavar='FILE',

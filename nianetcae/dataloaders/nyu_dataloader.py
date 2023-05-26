@@ -43,6 +43,9 @@ class NYUDataset(LightningDataModule):
             self,
             data_path: str = '/data/',
             batch_size: int = 64,
+            channel_dim: int = 3,
+            horizontal_dim: int = 300,
+            vertical_dim: int = 300,
             num_workers: int = 16,
             pin_memory: bool = False,
             train_size: int = 80,
@@ -54,6 +57,9 @@ class NYUDataset(LightningDataModule):
 
         self.data_path = data_path
         self.batch_size = batch_size
+        self.channel_dim = channel_dim
+        self.horizontal_dim = horizontal_dim
+        self.vertical_dim = vertical_dim
         self.num_workers = num_workers
         self.pin_memory = pin_memory
         self.train_size = train_size
@@ -77,7 +83,7 @@ class NYUDataset(LightningDataModule):
                 Scale(240),
                 RandomHorizontalFlip(),
                 RandomRotate(5),
-                CenterCrop([304, 304], [304, 304]),
+                CenterCrop([self.horizontal_dim, self.vertical_dim], [self.horizontal_dim, self.vertical_dim]),
                 ToTensor(),
                 Lighting(0.1, __imagenet_pca[
                     'eigval'], __imagenet_pca['eigvec']),
@@ -101,7 +107,7 @@ class NYUDataset(LightningDataModule):
         test_transform = transforms.Compose(
             [
                 Scale(240),
-                CenterCrop([304, 304], [304, 304]),
+                CenterCrop([self.horizontal_dim, self.vertical_dim], [self.horizontal_dim, self.vertical_dim]),
                 ToTensor(is_test=True),
                 Normalize(__imagenet_stats['mean'],
                           __imagenet_stats['std'])

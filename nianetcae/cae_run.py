@@ -47,13 +47,14 @@ class CONVAEArchitecture(ExtendedProblem):
             if len(model.encoding_layers) == 0 or len(model.decoding_layers) == 0:
                 CADL = int(9e10)
             else:
+                #model.num_epochs = 4
                 experiment = DNNAEExperiment(model, config['exp_params'], config['data_params']['horizontal_dim'])
                 config['trainer_params']['max_epochs'] = model.num_epochs
                 tb_logger = TensorBoardLogger(save_dir=config['logging_params']['save_dir'],
                                               name=str(self.iteration) + "_" + alg_name + "_" + model.hash_id)
 
                 runner = Trainer(logger=tb_logger,
-                                 enable_progress_bar=True,
+                                 enable_progress_bar=False,
                                  accelerator="cuda",
                                  devices=1,
                                  log_every_n_steps=32,
@@ -86,6 +87,9 @@ class CONVAEArchitecture(ExtendedProblem):
             conn.post_entries(model, fitness, solution, CADL, complexity, alg_name, self.iteration)
             torch.save(model.state_dict(), path + f"/model.pt")
 
+            # TODO Fix when NaN
+            if np.isnan(fitness):
+                fitness = int(9e10)
             return fitness
 
 
@@ -105,7 +109,7 @@ def solve_architecture_problem():
     runner = ExtendedRunner(
         config['logging_params']['save_dir'],
         dimension=DIMENSIONALITY,
-        max_evals=1000,
+        max_evals=100,
         runs=1,
         algorithms=[
             ParticleSwarmAlgorithm(),

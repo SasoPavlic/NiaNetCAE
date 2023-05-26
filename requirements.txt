@@ -12,3 +12,4 @@ matplotlib
 niapy
 lightning
 Pillow
+pytest
