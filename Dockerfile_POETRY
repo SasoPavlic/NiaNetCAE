@@ -4,7 +4,6 @@
 # https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#install-guide
 # https://github.com/Lightning-AI/lightning/tree/master/dockers
 
-
 ARG PYTHON_VERSION=3.10
 ARG PYTORCH_VERSION=2.0
 ARG CUDA_VERSION=11.7.1
@@ -16,14 +15,24 @@ LABEL maintainer="Lightning-AI <https://github.com/Lightning-AI>"
 
 WORKDIR /app
 
-# To copy everythin in one layer:
-# Rebuilding docker image will be slower on change, but the image will be smaller
-#COPY nianetcae /app/nianetcae
-#COPY tests /app/tests
+# https://stackoverflow.com/a/54763270/6152465
+ARG YOUR_ENV
 
-# To copy in multiple layers:
-# Rebuilding docker image will be faster on change, but the image will be bigger
-COPY requirements.txt /app/requirements.txt
+ENV YOUR_ENV=${YOUR_ENV} \
+  PYTHONFAULTHANDLER=1 \
+  PYTHONUNBUFFERED=1 \
+  PYTHONHASHSEED=random \
+  PIP_NO_CACHE_DIR=off \
+  PIP_DISABLE_PIP_VERSION_CHECK=on \
+  PIP_DEFAULT_TIMEOUT=100
+
+# Copy the poetry.lock and pyproject.toml files to the working directory
+COPY poetry.lock pyproject.toml /app/
+
+# Install Poetry
+RUN pip install poetry
+
+# Creating folders for a project:
 RUN mkdir data
 
 COPY nianetcae/niapy_extension /app/nianetcae/niapy_extension
@@ -43,7 +52,7 @@ COPY configs /app/configs
 COPY setup.py /app/setup.py
 COPY main.py /app/main.py
 
-RUN pip3 install .
-RUN pip3 install -r requirements.txt
-RUN python -c "import torch ; print(torch.__version__)" >> torch_version.info
-##CMD [ "python" , "main.py"]
+# Install project dependencies
+RUN poetry config virtualenvs.create false && \
+    poetry install --no-interaction --no-ansi && \
+    poetry run poe autoinstall-torch-cuda

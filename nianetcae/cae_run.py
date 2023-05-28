@@ -109,7 +109,7 @@ def solve_architecture_problem():
     runner = ExtendedRunner(
         config['logging_params']['save_dir'],
         dimension=DIMENSIONALITY,
-        max_evals=100,
+        max_evals=500,
         runs=1,
         algorithms=[
             ParticleSwarmAlgorithm(),

@@ -84,7 +84,8 @@ You can run the NiaNetCAE script once your setup is complete.
 docker run \
   --name=nianet-cae \
   -it \
-  -v $(pwd):/app/nianetcae/logs \
+  -v $(pwd)/logs:/app/nianetcae/logs \
+  -v $(pwd)/data:/app/data \
   -w="/app" \
   --shm-size 8G \
   --gpus all spartan300/nianet:cae \
@@ -103,7 +104,8 @@ docker run \
 4. Create the following _run.sh_ script: ```cat > run.sh```
 ```
 #!/bin/bash
-#SBATCH -J nianet-cae
+## Running code on SLURM cluster
+#SBATCH -J nianet
 #SBATCH -o nianet-cae-%j.out
 #SBATCH -e nianet-cae-%j.err
 #SBATCH --nodes=1
@@ -113,7 +115,7 @@ docker run \
 #SBATCH --gres=gpu:1
 #SBATCH --time=72:00:00
 
-singularity exec -e --pwd /app -B /ceph/grid/home/sasop/logs:/app/logs --nv docker://spartan300/nianet:cae python main.py
+singularity exec -e --pwd /app -B $(pwd)/logs:/app/logs,$(pwd)/data:/app/data --nv docker://spartan300/nianet:cae python main.py
 ```
 1. Make script executable: ```chmod +x run.sh```
 3. Submit your script to a job scheduler: ```SBATCH run.sh```
