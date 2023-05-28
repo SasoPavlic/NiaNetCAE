@@ -13,13 +13,13 @@ data_params:
   train_size: 0.65
   test_size: 0.25
   val_size: 0.10
-  batch_size: 4
+  batch_size: 64
   num_workers: 0
   pin_memory: True
 
 trainer_params:
   min_epochs: 1
-  max_epochs: 2
+  max_epochs: 200
 
 exp_params:
   weight_decay: 0.0
