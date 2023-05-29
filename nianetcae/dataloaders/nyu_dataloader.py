@@ -1,3 +1,4 @@
+import math
 import os
 from typing import List, Optional, Union
 import pandas as pd
@@ -13,13 +14,27 @@ from .nyu_transformer import *
 
 
 class DatasetLoader(Dataset):
-    def __init__(self, csv_file, transform=None):
+    def __init__(self, csv_file, transform=None, data_samples=100, batch_size=64):
         csv_file_path = os.getcwd() + csv_file
         print(csv_file_path)
         self.paths = pd.read_csv(csv_file_path, header=None,
                                  names=['image', 'depth'])
 
-        #self.paths = self.paths.head(16)
+        if data_samples > 100:
+            data_samples = 100
+
+        all_data_samples, batched_data_samples = len(self.paths), len(self.paths)
+        all_data_samples = int(all_data_samples * (data_samples / 100))
+
+
+        if all_data_samples % batch_size == 0:
+            batched_data_samples = all_data_samples
+        else:
+            batched_data_samples = all_data_samples - (all_data_samples % batch_size)
+
+        if batched_data_samples <=0:
+            batched_data_samples = batch_size
+        self.paths = self.paths.head(int(batched_data_samples))
         self.transform = transform
 
         super(DatasetLoader, self).__init__()
@@ -41,6 +56,7 @@ class DatasetLoader(Dataset):
 class NYUDataset(LightningDataModule):
     def __init__(
             self,
+            data_samples: int = 100,
             data_path: str = '/data/',
             batch_size: int = 64,
             channel_dim: int = 3,
@@ -55,6 +71,7 @@ class NYUDataset(LightningDataModule):
     ):
         super().__init__()
 
+        self.data_samples = data_samples
         self.data_path = data_path
         self.batch_size = batch_size
         self.channel_dim = channel_dim
@@ -99,8 +116,11 @@ class NYUDataset(LightningDataModule):
         )
         self.train_dataset = DatasetLoader(
             csv_file=self.data_path + "nyu2_train.csv",
-            transform=train_transform)
+            transform=train_transform,
+            data_samples=self.data_samples,
+            batch_size=self.batch_size)
 
+        print(f"Train dataset size: {self.train_dataset.paths.shape[0]}")
         __imagenet_stats = {'mean': [0.485, 0.456, 0.406],
                             'std': [0.229, 0.224, 0.225]}
 
@@ -117,7 +137,11 @@ class NYUDataset(LightningDataModule):
 
         self.test_dataset = DatasetLoader(
             csv_file=self.data_path + "nyu2_test.csv",
-            transform=test_transform)
+            transform=test_transform,
+            data_samples=self.data_samples,
+            batch_size=self.batch_size)
+
+        print(f"Test dataset size: {self.test_dataset.paths.shape[0]}")
 
     # TODO Implement re-usable datalaoder process
     # https://github.com/pytorch/pytorch/issues/15849#issuecomment-573921048
