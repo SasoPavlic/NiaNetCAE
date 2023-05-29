@@ -25,6 +25,8 @@ WORKDIR /app
 # Rebuilding docker image will be faster on change, but the image will be bigger
 COPY requirements.txt /app/requirements.txt
 RUN mkdir data
+RUN mkdir configs
+#COPY configs /app/configs
 
 COPY nianetcae/niapy_extension /app/nianetcae/niapy_extension
 COPY nianetcae/storage /app/nianetcae/storage
@@ -39,7 +41,6 @@ COPY nianetcae/cae_run.py /app/nianetcae/cae_run.py
 COPY tests/test_model.py /app/tests/test_model.py
 COPY tests/__init__.py /app/tests/__init__.py
 
-COPY configs /app/configs
 COPY setup.py /app/setup.py
 COPY main.py /app/main.py
 

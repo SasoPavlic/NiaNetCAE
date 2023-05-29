@@ -47,7 +47,7 @@ class CONVAEArchitecture(ExtendedProblem):
             if len(model.encoding_layers) == 0 or len(model.decoding_layers) == 0:
                 CADL = int(9e10)
             else:
-                #model.num_epochs = 4
+                model.num_epochs = 1
                 experiment = DNNAEExperiment(model, config['exp_params'], config['data_params']['horizontal_dim'])
                 config['trainer_params']['max_epochs'] = model.num_epochs
                 tb_logger = TensorBoardLogger(save_dir=config['logging_params']['save_dir'],
