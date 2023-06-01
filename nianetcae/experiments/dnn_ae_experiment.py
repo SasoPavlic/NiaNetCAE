@@ -7,6 +7,20 @@ from nianetcae.experiments.metrics import ConvAutoencoderDepthLoss, RootMeanAbso
     Delta1, Delta2, Delta3
 from nianetcae.models.base import BaseAutoencoder
 from nianetcae.models.conv_ae import ConvAutoencoder
+from lightning.pytorch.callbacks import LearningRateFinder
+
+
+class FineTuneLearningRateFinder(LearningRateFinder):
+    def __init__(self, update_on_x_epoch, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.update_on_x_epoch = update_on_x_epoch
+
+    def on_fit_start(self, *args, **kwargs):
+        return
+
+    def on_train_epoch_start(self, trainer, pl_module):
+        if trainer.current_epoch % self.update_on_x_epoch == 0 or trainer.current_epoch == 0:
+            self.lr_find(trainer, pl_module)
 
 
 class DNNAEExperiment(LightningModule):
@@ -17,7 +31,7 @@ class DNNAEExperiment(LightningModule):
         # self.save_hyperparameters(logger=False)
 
         self.model = conv_autoencoder
-        self.hparams['lr'] = self.model.learning_rate
+        self.learning_rate = 0.0
         self.params = params
         self.tensor_dim = tensor_dim
         self.curr_device = None
@@ -50,7 +64,33 @@ class DNNAEExperiment(LightningModule):
         return self.model(input, **kwargs)
 
     def configure_optimizers(self):
-        return self.model.optimizer
+
+        """When AE does not have any layers"""
+        if len(list(self.model.parameters())) == 0:
+            self.model.optimizer_name = "Empty"
+            return None
+
+        if self.model.optimizer_name == "Adam":
+            return torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
+
+        elif self.model.optimizer_name == "Adagrad":
+            return torch.optim.Adagrad(self.model.parameters(), lr=self.learning_rate)
+
+        elif self.model.optimizer_name == "SGD":
+            return torch.optim.SGD(self.model.parameters(), lr=self.learning_rate)
+
+        elif self.model.optimizer_name == "RAdam":
+            return torch.optim.RAdam(self.model.parameters(), lr=self.learning_rate)
+
+        elif self.model.optimizer_name == "ASGD":
+            return torch.optim.ASGD(self.model.parameters(), lr=self.learning_rate)
+
+        elif self.model.optimizer_name == "RPROP":
+            return torch.optim.Rprop(self.model.parameters(), lr=self.learning_rate)
+
+        else:
+            return torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
+
 
     def training_step(self, batch, batch_idx, optimizer_idx=0):
         torch.cuda.empty_cache()
@@ -65,9 +105,11 @@ class DNNAEExperiment(LightningModule):
                       on_step=False,
                       on_epoch=True, batch_size=batch['image'].shape[0])
 
+        torch.cuda.empty_cache()
         return train_loss['loss']
 
     def test_step(self, batch, batch_idx, optimizer_idx=0):
+        torch.cuda.empty_cache()
         dataloader_iterator = iter(self.trainer.datamodule.test_dataloader())
 
         while True:
@@ -79,9 +121,6 @@ class DNNAEExperiment(LightningModule):
                 break
             finally:
                 results = self.forward(batch)
-
-                # TODO Remove when tested
-                # errors = evaluateError(results['output'], results['depth'])
 
                 self.CADL_metric.to(self.curr_device)
 
@@ -132,3 +171,5 @@ class DNNAEExperiment(LightningModule):
                             'CADL': self.CADL_score}),
                       prog_bar=True, sync_dist=True, on_step=False,
                       on_epoch=True, batch_size=batch['image'].shape[0])
+
+        torch.cuda.empty_cache()
