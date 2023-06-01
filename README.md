@@ -18,8 +18,8 @@ in the library [NiaPy](https://github.com/NiaOrg/NiaPy) to navigate efficiently 
 ### What it can do? 👀
 
 * **Construct novel AE's architecture** using nature-inspired algorithms.
-* * number of solutions = topology shape * layer step * layers * act. func. * epochs * lr * optimizers
-* * 3,456,000,000 = 2 * 60 * 60 * 8 * 100 * 100 * 6 
+* * number of solutions = layer step * layers * act. func. * epochs * lr * optimizers
+* * 1.728.000.000 = 60 * 60 * 8 * 100 * 100 * 6
 * It can be utilized for **any kind of dataset**, which has **3D images** values.
 * Estimate the depth of the image
 
@@ -65,14 +65,12 @@ Set the boundaries of your search space with [conv_ae.py](nianetcae/models/conv_
 
 The following dimensions can be modified:
 
-* Topology shape (symmetrical, asymmetrical)
-* Size of input, hidden and output layers
-* Number of hidden layers
-* Number of neurons in hidden layers
-* Activation functions
-* Number of epochs
-* Learning rate
-* Optimizer
+* y1: number of neurons per layer,
+* y2: number of layers,
+* y3: activation function
+* y4: number of epochs,
+* y5: learning rate
+* y6: optimizer algorithm.
 
 You can run the NiaNetCAE script once your setup is complete.
 

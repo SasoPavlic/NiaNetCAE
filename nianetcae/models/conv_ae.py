@@ -18,16 +18,8 @@ from lightning.pytorch import LightningModule
 class ConvAutoencoder(BaseAutoencoder, nn.Module):
     def __init__(self, solution, **kwargs):
         super(ConvAutoencoder, self).__init__()
-        """
-        Dimensionality:
-        y1: topology shape,
-        y2: number of neurons per layer,
-        y3: number of layers,
-        y4: activation function
-        y5: number of epochs,
-        y6: learning rate
-        y7: optimizer algorithm.
-        """
+
+        y1, y2, y3, y4 = solution
 
         self.id = str(int(time.time())).strip()
         self.batch_size = kwargs['data_params']['batch_size']
@@ -43,28 +35,16 @@ class ConvAutoencoder(BaseAutoencoder, nn.Module):
         self.encoding_layers = nn.ModuleList()
         self.decoding_layers = nn.ModuleList()
 
-        self.topology_shape = map_shape(solution[0])
-        self.topology_shape = "SYMMETRICAL"
-        self.layer_step = map_layer_step(solution[1], self.channel_dim, self.kernel_size,
+        self.layer_step = map_layer_step(y1, self.channel_dim, self.kernel_size,
                                          (self.horizontal_dim, self.vertical_dim), self.padding, self.stride)
-        self.num_layers = map_num_layers(solution[2], self.layer_step, kwargs['data_params']['horizontal_dim'])
-        self.activation = map_activation(solution[3], self)
-        self.num_epochs = map_num_epochs(solution[4])
-        self.learning_rate = map_learning_rate(solution[5])
+        self.num_layers = map_num_layers(y2, self.layer_step, kwargs['data_params']['horizontal_dim'])
+        self.activation, self.activation_name = map_activation(y3, self)
 
         self.bottleneck_size = 0
 
-        """
-        output_size = (input_size - kernel_size + 2 * padding) / stride + 1
-
-        (304 - 3 + 2 * 1) / 2 + 1 = 152
-        
-        
-        """
-
         self.generate_autoencoder()
 
-        self.optimizer = map_optimizer(solution[6], self)
+        self.optimizer_name = map_optimizer(y4, self)
         self.get_hash()
 
         # Encoder
@@ -98,55 +78,47 @@ class ConvAutoencoder(BaseAutoencoder, nn.Module):
 
         if self.num_layers != 0 and self.layer_step != 0:
 
-            if self.topology_shape == "SYMMETRICAL":
-                while layers != 0:
-                    self.encoding_layers.append(
-                        nn.Conv2d(in_channels=input_shape, out_channels=output_shape, kernel_size=3, stride=2,
-                                  padding=1))
+            while layers != 0:
+                self.encoding_layers.append(
+                    nn.Conv2d(in_channels=input_shape, out_channels=output_shape, kernel_size=3, stride=2,
+                              padding=1))
 
-                    if layers == max_layers:
-                        self.decoding_layers.insert(0, nn.ConvTranspose2d(in_channels=output_shape,
-                                                                          out_channels=1, kernel_size=3,
-                                                                          stride=2, padding=1, output_padding=1))
-                    else:
-                        self.decoding_layers.insert(0, nn.ConvTranspose2d(in_channels=output_shape,
-                                                                          out_channels=input_shape, kernel_size=3,
-                                                                          stride=2, padding=1, output_padding=1))
+                if layers == max_layers:
+                    self.decoding_layers.insert(0, nn.ConvTranspose2d(in_channels=output_shape,
+                                                                      out_channels=1, kernel_size=3,
+                                                                      stride=2, padding=1, output_padding=1))
+                else:
+                    self.decoding_layers.insert(0, nn.ConvTranspose2d(in_channels=output_shape,
+                                                                      out_channels=input_shape, kernel_size=3,
+                                                                      stride=2, padding=1, output_padding=1))
 
-                    layers = layers - 1
-                    input_shape = output_shape
-                    output_shape = output_shape + self.layer_step
+                layers = layers - 1
+                input_shape = output_shape
+                output_shape = output_shape + self.layer_step
 
-                print("+++++++++++++++++++++++++++++++++++++++START ARCHITECTURE "
-                      "MODIFICATION+++++++++++++++++++++++++++++++++++++++")
+            print("+++++++++++++++++++++++++++++++++++++++START ARCHITECTURE "
+                  "MODIFICATION+++++++++++++++++++++++++++++++++++++++")
 
-                network_prunning(self.encoding_layers, self.decoding_layers, h_w)
+            network_prunning(self.encoding_layers, self.decoding_layers, h_w)
 
-                output_list = calculate_output_shapes(self.encoding_layers, self.decoding_layers, h_w, )
+            output_list = calculate_output_shapes(self.encoding_layers, self.decoding_layers, h_w, )
 
-                last_layer = calculate_last_layer((output_list[-1][0], output_list[-1][0]), h_w)
-                if last_layer is not None:
-                    self.decoding_layers.append(last_layer)
+            last_layer = calculate_last_layer((output_list[-1][0], output_list[-1][0]), h_w)
+            if last_layer is not None:
+                self.decoding_layers.append(last_layer)
 
-                print(f"Layer outputs: {calculate_output_shapes(self.encoding_layers, self.decoding_layers, h_w, )}")
-                self.num_layers = len(self.encoding_layers)
-                self.bottleneck_size = self.encoding_layers[-1].out_channels
+            print(f"Layer outputs: {calculate_output_shapes(self.encoding_layers, self.decoding_layers, h_w, )}")
+            self.num_layers = len(self.encoding_layers)
+            self.bottleneck_size = self.encoding_layers[-1].out_channels
 
-                print("+++++++++++++++++++++++++++++++++++++++END ARCHITECTURE "
-                      "MODIFICATION+++++++++++++++++++++++++++++++++++++++")
-
-            elif self.topology_shape == "A-SYMMETRICAL":
-                # TODO Implement A-SYMMETRICAL
-                pass
+            print("+++++++++++++++++++++++++++++++++++++++END ARCHITECTURE "
+                  "MODIFICATION+++++++++++++++++++++++++++++++++++++++")
 
     def get_hash(self):
 
-        self.hash_id = hashlib.sha1(str(str(self.topology_shape) +
-                                        str(self.layer_step) +
+        self.hash_id = hashlib.sha1(str(str(self.layer_step) +
                                         str(self.num_layers) +
                                         str(self.activation_name) +
-                                        str(self.num_epochs) +
-                                        str(self.learning_rate) +
                                         str(self.optimizer_name) +
                                         str(self.bottleneck_size) +
                                         str(self.encoding_layers) +

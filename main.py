@@ -1,17 +1,17 @@
+import argparse
 import uuid
 from datetime import datetime
+from pathlib import Path
 
 import torch
-import argparse
 import yaml
 from lightning.pytorch import seed_everything
+from lightning.pytorch.callbacks import EarlyStopping
 
 import nianetcae
-from nianetcae.storage.database import SQLiteConnector
-from pathlib import Path
-from nianetcae.dataloaders.nyu_dataloader import NYUDataset
-
 from nianetcae.cae_run import solve_architecture_problem
+from nianetcae.dataloaders.nyu_dataloader import NYUDataset
+from nianetcae.storage.database import SQLiteConnector
 
 if __name__ == '__main__':
     RUN_UUID = uuid.uuid4().hex
@@ -29,7 +29,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     with open(args.filename, 'r') as file:
         try:
-            config = yaml.safe_load(file)
+            config = yaml.load(file, Loader=yaml.Loader)  # yaml.safe_load(file)
         except yaml.YAMLError as exc:
             print("Error while loading config file")
             print(exc)

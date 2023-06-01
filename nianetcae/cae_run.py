@@ -1,16 +1,14 @@
 from pathlib import Path
 
 import torch
-
+from lightning.pytorch import Trainer
+from lightning.pytorch.callbacks import LearningRateMonitor, ModelCheckpoint, EarlyStopping, BatchSizeFinder
+from lightning.pytorch.loggers import TensorBoardLogger
 from niapy.algorithms.basic import ParticleSwarmAlgorithm, DifferentialEvolution, FireflyAlgorithm, GeneticAlgorithm
 from niapy.algorithms.modified import SelfAdaptiveDifferentialEvolution
-
-from lightning.pytorch.loggers import TensorBoardLogger
-from lightning.pytorch.callbacks import LearningRateMonitor, ModelCheckpoint
-from lightning.pytorch import Trainer
 from tabulate import tabulate
 
-from nianetcae.experiments.dnn_ae_experiment import DNNAEExperiment
+from nianetcae.experiments.dnn_ae_experiment import DNNAEExperiment, FineTuneLearningRateFinder
 from nianetcae.models.conv_ae import ConvAutoencoder
 from nianetcae.niapy_extension.wrapper import *
 
@@ -18,6 +16,7 @@ RUN_UUID = None
 config = None
 conn = None
 datamodule = None
+
 
 class CONVAEArchitecture(ExtendedProblem):
 
@@ -47,39 +46,42 @@ class CONVAEArchitecture(ExtendedProblem):
             if len(model.encoding_layers) == 0 or len(model.decoding_layers) == 0:
                 CADL = int(9e10)
             else:
-                model.num_epochs = 1
                 experiment = DNNAEExperiment(model, config['exp_params'], config['data_params']['horizontal_dim'])
-                config['trainer_params']['max_epochs'] = model.num_epochs
                 tb_logger = TensorBoardLogger(save_dir=config['logging_params']['save_dir'],
                                               name=str(self.iteration) + "_" + alg_name + "_" + model.hash_id)
 
-                runner = Trainer(logger=tb_logger,
-                                 enable_progress_bar=False,
-                                 accelerator="cuda",
-                                 devices=1,
-                                 log_every_n_steps=32,
-                                 # auto_select_gpus=True,
+                trainer = Trainer(logger=tb_logger,
+                                  enable_progress_bar=True,
+                                  accelerator="cuda",
+                                  devices=1,
+                                  default_root_dir=tb_logger.root_dir,
+                                  log_every_n_steps=32,
+                                  # auto_select_gpus=True,
 
-                                 callbacks=[
-                                     LearningRateMonitor(),
-                                     # BatchSizeFinder(),
-                                     # LearningRateFinder(attr_name="lr"),
-                                     ModelCheckpoint(save_top_k=1,
-                                                     dirpath=os.path.join(tb_logger.log_dir, "checkpoints"),
-                                                     monitor="loss",
-                                                     save_last=True)
-                                 ],
-                                 # strategy=DDPPlugin(find_unused_parameters=False),
-                                 **config['trainer_params'])
+                                  callbacks=[
+                                      LearningRateMonitor(),
+                                      #BatchSizeFinder(mode="power", steps_per_trial=3),
+                                      #FineTuneLearningRateFinder(update_on_x_epoch=10, **config['lr_finder']),
+                                      # EarlyStopping(**config['early_stop'],
+                                      #               verbose=False,
+                                      #               check_finite=True),
+                                      ModelCheckpoint(save_top_k=1,
+                                                      dirpath=os.path.join(tb_logger.log_dir, "checkpoints"),
+                                                      monitor="loss",
+                                                      save_last=True)
+                                  ],
+                                  # strategy=DDPPlugin(find_unused_parameters=False),
+                                  **config['trainer_params'])
 
                 print(f"======= Training {config['model_params']['name']} =======")
                 print(f'\nTraining start: {datetime.now().strftime("%H:%M:%S-%d/%m/%Y")}')
-                runner.fit(experiment, datamodule=datamodule)
+                trainer.fit(experiment, datamodule=datamodule)
                 print(f'\nTraining end: {datetime.now().strftime("%H:%M:%S-%d/%m/%Y")}')
-                runner.test(experiment, datamodule=datamodule)
+                trainer.test(experiment, datamodule=datamodule)
+
                 CADL = experiment.CADL_score.item()
 
-            complexity = (model.num_epochs ** 2) + (model.num_layers * 100) + (model.bottleneck_size * 10)
+            complexity = (model.num_layers * 100) + (model.bottleneck_size * 10)
             fitness = (CADL * 1000) + (complexity / 100)
 
             print(tabulate([[CADL, complexity, fitness]], headers=["RMSE", "AUC", "Complexity", "Fitness"],
@@ -96,15 +98,12 @@ class CONVAEArchitecture(ExtendedProblem):
 def solve_architecture_problem():
     """
     Dimensionality:
-    y1: topology shape,
-    y2: number of neurons per layer,
-    y3: number of layers,
-    y4: activation function
-    y5: number of epochs,
-    y6: learning rate
-    y7: optimizer algorithm.
+    y1: number of neurons per layer,
+    y2: number of layers,
+    y3: activation function
+    y4: optimizer algorithm.
     """
-    DIMENSIONALITY = 7
+    DIMENSIONALITY = 4
 
     runner = ExtendedRunner(
         config['logging_params']['save_dir'],
