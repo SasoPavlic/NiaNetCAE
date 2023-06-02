@@ -1,26 +1,39 @@
 import torch
 import torchmetrics
 from lightning.pytorch import LightningModule
+from lightning.pytorch.callbacks import LearningRateFinder
 from torch import Tensor
 
-from nianetcae.experiments.metrics import ConvAutoencoderDepthLoss, RootMeanAbsoluteError, AbsoluteRelativeDifference, Log10Metric, \
+from nianetcae.experiments.metrics import ConvAutoencoderDepthLoss, RootMeanAbsoluteError, AbsoluteRelativeDifference, \
+    Log10Metric, \
     Delta1, Delta2, Delta3
-from nianetcae.models.base import BaseAutoencoder
 from nianetcae.models.conv_ae import ConvAutoencoder
-from lightning.pytorch.callbacks import LearningRateFinder
 
 
 class FineTuneLearningRateFinder(LearningRateFinder):
-    def __init__(self, update_on_x_epoch, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.update_on_x_epoch = update_on_x_epoch
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs['lr_finder'])
+        self.tune_n_epochs = kwargs['tune_n_epochs']
+        self.previous_loss = float('inf')
 
     def on_fit_start(self, *args, **kwargs):
         return
 
     def on_train_epoch_start(self, trainer, pl_module):
-        if trainer.current_epoch % self.update_on_x_epoch == 0 or trainer.current_epoch == 0:
-            self.lr_find(trainer, pl_module)
+        if trainer.current_epoch % self.tune_n_epochs == 0 or trainer.current_epoch == 0:
+            if pl_module.train_loss is not None:
+                loss = pl_module.train_loss['loss'].item()
+                if loss < self.previous_loss:
+                    Log.debug(f"\nLoss decreased from {self.previous_loss} to {loss}")
+
+                elif loss > self.previous_loss:
+                    Log.debug(f"\nLoss increased from {self.previous_loss} to {loss}")
+                    self.lr_find(trainer, pl_module)
+
+                self.previous_loss = pl_module.train_loss['loss'].item()
+
+            else:
+                self.lr_find(trainer, pl_module)
 
 
 class DNNAEExperiment(LightningModule):
@@ -36,6 +49,7 @@ class DNNAEExperiment(LightningModule):
         self.tensor_dim = tensor_dim
         self.curr_device = None
         self.hold_graph = False
+        self.train_loss = None
 
         self.MSE_metric = torchmetrics.MeanSquaredError()
         self.RMSE_metric = RootMeanAbsoluteError()
@@ -91,22 +105,21 @@ class DNNAEExperiment(LightningModule):
         else:
             return torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
 
-
     def training_step(self, batch, batch_idx, optimizer_idx=0):
         torch.cuda.empty_cache()
         results = self.forward(batch)
         self.curr_device = batch['image'].device
-        train_loss = self.model.loss_function(self.curr_device,
-                                              **results,
-                                              optimizer_idx=optimizer_idx,
-                                              batch_idx=batch_idx)
+        self.train_loss = self.model.loss_function(self.curr_device,
+                                                   **results,
+                                                   optimizer_idx=optimizer_idx,
+                                                   batch_idx=batch_idx)
 
-        self.log_dict({key: val.item() for key, val in train_loss.items()}, prog_bar=True, sync_dist=True,
+        self.log_dict({key: val.item() for key, val in self.train_loss.items()}, prog_bar=True, sync_dist=True,
                       on_step=False,
                       on_epoch=True, batch_size=batch['image'].shape[0])
 
         torch.cuda.empty_cache()
-        return train_loss['loss']
+        return self.train_loss['loss']
 
     def test_step(self, batch, batch_idx, optimizer_idx=0):
         torch.cuda.empty_cache()

@@ -13,3 +13,4 @@ niapy
 lightning
 Pillow
 pytest
+colorama
