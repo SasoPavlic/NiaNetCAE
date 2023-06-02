@@ -1,7 +1,10 @@
 import argparse
 import uuid
 from datetime import datetime
+from os import path
 from pathlib import Path
+import logging.config
+from log import Log
 
 import torch
 import yaml
@@ -14,6 +17,7 @@ from nianetcae.dataloaders.nyu_dataloader import NYUDataset
 from nianetcae.storage.database import SQLiteConnector
 
 if __name__ == '__main__':
+
     RUN_UUID = uuid.uuid4().hex
     print(f'Program start: {datetime.now().strftime("%H:%M:%S-%d/%m/%Y")}')
     print(f"RUN UUID: {RUN_UUID}")
@@ -36,6 +40,10 @@ if __name__ == '__main__':
 
     config['logging_params']['save_dir'] += RUN_UUID + '/'
     Path(config['logging_params']['save_dir']).mkdir(parents=True, exist_ok=True)
+
+    Log.enable(config['logging_params'])
+    Log.header("NiaNetCAE settings")
+    Log.info(config['model_params'])
 
     conn = SQLiteConnector(config['logging_params']['db_storage'], f"solutions")  # _{RUN_UUID}")
     seed_everything(config['exp_params']['manual_seed'], True)

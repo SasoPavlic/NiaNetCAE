@@ -7,6 +7,8 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.utils
 import torchmetrics.image
+
+from log import Log
 from nianetcae.models.mapper import *
 
 from nianetcae.experiments.metrics import RMSELoss
@@ -96,7 +98,7 @@ class ConvAutoencoder(BaseAutoencoder, nn.Module):
                 input_shape = output_shape
                 output_shape = output_shape + self.layer_step
 
-            print("+++++++++++++++++++++++++++++++++++++++START ARCHITECTURE "
+            Log.debug("+++++++++++++++++++++++++++++++++++++++START ARCHITECTURE "
                   "MODIFICATION+++++++++++++++++++++++++++++++++++++++")
 
             network_prunning(self.encoding_layers, self.decoding_layers, h_w)
@@ -107,11 +109,11 @@ class ConvAutoencoder(BaseAutoencoder, nn.Module):
             if last_layer is not None:
                 self.decoding_layers.append(last_layer)
 
-            print(f"Layer outputs: {calculate_output_shapes(self.encoding_layers, self.decoding_layers, h_w, )}")
+            Log.debug(f"Layer outputs: {calculate_output_shapes(self.encoding_layers, self.decoding_layers, h_w, )}")
             self.num_layers = len(self.encoding_layers)
             self.bottleneck_size = self.encoding_layers[-1].out_channels
 
-            print("+++++++++++++++++++++++++++++++++++++++END ARCHITECTURE "
+            Log.debug("+++++++++++++++++++++++++++++++++++++++END ARCHITECTURE "
                   "MODIFICATION+++++++++++++++++++++++++++++++++++++++")
 
     def get_hash(self):

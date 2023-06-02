@@ -10,13 +10,14 @@ from lightning.pytorch.utilities.data import DataLoader
 
 from torchvision import transforms
 
+from log import Log
 from .nyu_transformer import *
 
 
 class DatasetLoader(Dataset):
     def __init__(self, csv_file, transform=None, data_samples=100, batch_size=64):
         csv_file_path = os.getcwd() + csv_file
-        print(csv_file_path)
+        Log.debug(csv_file_path)
         self.paths = pd.read_csv(csv_file_path, header=None,
                                  names=['image', 'depth'])
 
@@ -120,7 +121,7 @@ class NYUDataset(LightningDataModule):
             data_samples=self.data_samples,
             batch_size=self.batch_size)
 
-        print(f"Train dataset size: {self.train_dataset.paths.shape[0]}")
+        Log.debug(f"Train dataset size: {self.train_dataset.paths.shape[0]}")
         __imagenet_stats = {'mean': [0.485, 0.456, 0.406],
                             'std': [0.229, 0.224, 0.225]}
 
@@ -141,7 +142,7 @@ class NYUDataset(LightningDataModule):
             data_samples=self.data_samples,
             batch_size=self.batch_size)
 
-        print(f"Test dataset size: {self.test_dataset.paths.shape[0]}")
+        Log.debug(f"Test dataset size: {self.test_dataset.paths.shape[0]}")
 
     # TODO Implement re-usable datalaoder process
     # https://github.com/pytorch/pytorch/issues/15849#issuecomment-573921048

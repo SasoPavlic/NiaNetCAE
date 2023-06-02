@@ -84,6 +84,7 @@ docker run \
   -it \
   -v $(pwd)/logs:/app/nianetcae/logs \
   -v $(pwd)/data:/app/data \
+  -v $(pwd)/configs:/app/configs \
   -w="/app" \
   --shm-size 8G \
   --gpus all spartan300/nianet:cae \

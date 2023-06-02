@@ -24,6 +24,8 @@ WORKDIR /app
 # To copy in multiple layers:
 # Rebuilding docker image will be faster on change, but the image will be bigger
 COPY requirements.txt /app/requirements.txt
+RUN pip3 install -r requirements.txt
+
 RUN mkdir data
 RUN mkdir configs
 #COPY configs /app/configs
@@ -43,8 +45,7 @@ COPY tests/__init__.py /app/tests/__init__.py
 
 COPY setup.py /app/setup.py
 COPY main.py /app/main.py
-
+COPY log.py /app/log.py
 RUN pip3 install .
-RUN pip3 install -r requirements.txt
 RUN python -c "import torch ; print(torch.__version__)" >> torch_version.info
 ##CMD [ "python" , "main.py"]

@@ -19,15 +19,17 @@ data_params:
   pin_memory: True
 
 trainer_params:
-  min_epochs: 1
-  max_epochs: 2
+  min_epochs: 100
+  max_epochs: 2000
 
-lr_finder:
-  mode: "exponential" #"linear"
-  num_training_steps: 100
-  attr_name: "learning_rate"
-  update_attr: True
-  early_stop_threshold: # None # https://github.com/Lightning-AI/lightning/issues/4846#issuecomment-1014148839
+fine_tune_lr_finder:
+  tune_n_epochs: 2
+  lr_finder:
+    mode: "exponential" #"linear"
+    num_training_steps: 100
+    attr_name: "learning_rate"
+    update_attr: True
+    early_stop_threshold: # None # https://github.com/Lightning-AI/lightning/issues/4846#issuecomment-1014148839
 
 exp_params:
   weight_decay: 0.0
@@ -35,11 +37,12 @@ exp_params:
 #TODO Research how to use early stop on NYU dataset
 early_stop:
   monitor: "loss"
-  patience: 5
+  patience: 50
   min_delta: 0.0
   mode: "min"
 
 logging_params:
   name: "ConvAutoencoder"
+  logger_file: "logs/ConvAutoencoder.log"
   save_dir: "logs/"
   db_storage: "logs/solution.db"

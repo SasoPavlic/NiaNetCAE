@@ -8,6 +8,7 @@ from niapy.algorithms.basic import ParticleSwarmAlgorithm, DifferentialEvolution
 from niapy.algorithms.modified import SelfAdaptiveDifferentialEvolution
 from tabulate import tabulate
 
+from log import Log
 from nianetcae.experiments.dnn_ae_experiment import DNNAEExperiment, FineTuneLearningRateFinder
 from nianetcae.models.conv_ae import ConvAutoencoder
 from nianetcae.niapy_extension.wrapper import *
@@ -25,9 +26,9 @@ class CONVAEArchitecture(ExtendedProblem):
         self.iteration = 0
 
     def _evaluate(self, solution, alg_name):
-        print("=================================================================================================")
-        print(f"ITERATION: {self.iteration}")
-        print(f"SOLUTION : {solution}")
+        Log.debug("=================================================================================================")
+        Log.debug(f"ITERATION: {self.iteration}")
+        Log.debug(f"SOLUTION : {solution}")
         self.iteration += 1
 
         model = ConvAutoencoder(solution, **config)
@@ -37,7 +38,7 @@ class CONVAEArchitecture(ExtendedProblem):
 
         if existing_entry.shape[0] > 0:
             fitness = existing_entry['fitness'][0]
-            print(f"Model for this solution already exists")
+            Log.info(f"Model for this solution already exists")
             return fitness
 
         else:
@@ -55,16 +56,16 @@ class CONVAEArchitecture(ExtendedProblem):
                                   accelerator="cuda",
                                   devices=1,
                                   default_root_dir=tb_logger.root_dir,
-                                  log_every_n_steps=32,
+                                  log_every_n_steps=50,
                                   # auto_select_gpus=True,
 
                                   callbacks=[
                                       LearningRateMonitor(),
-                                      #BatchSizeFinder(mode="power", steps_per_trial=3),
-                                      #FineTuneLearningRateFinder(update_on_x_epoch=10, **config['lr_finder']),
-                                      # EarlyStopping(**config['early_stop'],
-                                      #               verbose=False,
-                                      #               check_finite=True),
+                                      BatchSizeFinder(mode="power", steps_per_trial=3),
+                                      FineTuneLearningRateFinder(**config['fine_tune_lr_finder']),
+                                      EarlyStopping(**config['early_stop'],
+                                                    verbose=False,
+                                                    check_finite=True),
                                       ModelCheckpoint(save_top_k=1,
                                                       dirpath=os.path.join(tb_logger.log_dir, "checkpoints"),
                                                       monitor="loss",
@@ -73,10 +74,10 @@ class CONVAEArchitecture(ExtendedProblem):
                                   # strategy=DDPPlugin(find_unused_parameters=False),
                                   **config['trainer_params'])
 
-                print(f"======= Training {config['model_params']['name']} =======")
-                print(f'\nTraining start: {datetime.now().strftime("%H:%M:%S-%d/%m/%Y")}')
+                Log.info(f"======= Training {config['model_params']['name']} =======")
+                Log.info(f'\nTraining start: {datetime.now().strftime("%H:%M:%S-%d/%m/%Y")}')
                 trainer.fit(experiment, datamodule=datamodule)
-                print(f'\nTraining end: {datetime.now().strftime("%H:%M:%S-%d/%m/%Y")}')
+                Log.info(f'\nTraining end: {datetime.now().strftime("%H:%M:%S-%d/%m/%Y")}')
                 trainer.test(experiment, datamodule=datamodule)
 
                 CADL = experiment.CADL_score.item()
@@ -84,7 +85,7 @@ class CONVAEArchitecture(ExtendedProblem):
             complexity = (model.num_layers * 100) + (model.bottleneck_size * 10)
             fitness = (CADL * 1000) + (complexity / 100)
 
-            print(tabulate([[CADL, complexity, fitness]], headers=["RMSE", "AUC", "Complexity", "Fitness"],
+            Log.debug(tabulate([[CADL, complexity, fitness]], headers=["RMSE", "AUC", "Complexity", "Fitness"],
                            tablefmt="pretty"))
             conn.post_entries(model, fitness, solution, CADL, complexity, alg_name, self.iteration)
             torch.save(model.state_dict(), path + f"/model.pt")
@@ -122,14 +123,14 @@ def solve_architecture_problem():
         ]
     )
 
-    print("=====================================SEARCH STARTED==============================================")
+    Log.info("=====================================SEARCH STARTED==============================================")
     final_solutions = runner.run(export='json', verbose=True)
-    print("=====================================SEARCH COMPLETED============================================")
+    Log.info("=====================================SEARCH COMPLETED============================================")
 
-    print(f"Solutions: {final_solutions}")
+    Log.info(f"Solutions: {final_solutions}")
     best_solution, best_algorithm = conn.best_results()
     best_model = ConvAutoencoder(best_solution, **config)
     model_file = config['logging_params']['save_dir'] + f"{best_algorithm}_{best_model.hash_id}.pt"
     # https://pytorch.org/tutorials/beginner/saving_loading_models.html#saving-loading-model-for-inference
     torch.save(best_model.state_dict(), model_file)
-    print(f"Best model saved to: {model_file}")
+    Log.info(f"Best model saved to: {model_file}")

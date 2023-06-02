@@ -5,6 +5,8 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
+from log import Log
+
 """
 Convolutional output shape calculation is from this source:
 https://discuss.pytorch.org/t/utility-function-for-calculating-the-shape-of-a-conv-output/11173/6
@@ -268,11 +270,11 @@ def calculate_last_layer(current, final):
     output_padding = 0
     dilation = 1
 
-    print(f"Task for: {(current[0], current[1])} --> {(final[0], final[1])}")
+    Log.debug(f"Task for: {(current[0], current[1])} --> {(final[0], final[1])}")
 
     if current > final:
         while True:
-            print(f"Trying padding: {padding}")
+            Log.debug(f"Trying padding: {padding}")
             test_shape = convtransp2d_output_shape(current,
                                                    kernel_size=kernel_size,
                                                    dilation=dilation,
@@ -280,7 +282,7 @@ def calculate_last_layer(current, final):
                                                    padding=padding,
                                                    output_padding=output_padding)
 
-            print(f"Test shape: {test_shape}")
+            Log.debug(f"Test shape: {test_shape}")
             if test_shape == final:
                 return nn.ConvTranspose2d(1, 1, kernel_size=kernel_size, stride=stride, padding=padding,
                                           output_padding=output_padding, dilation=dilation).to('cuda')
@@ -290,7 +292,7 @@ def calculate_last_layer(current, final):
 
     elif current < final:
         while True:
-            print(f"Trying output padding: {output_padding}")
+            Log.debug(f"Trying output padding: {output_padding}")
             test_shape = convtransp2d_output_shape(current,
                                                    kernel_size=kernel_size,
                                                    dilation=dilation,
@@ -298,7 +300,7 @@ def calculate_last_layer(current, final):
                                                    padding=padding,
                                                    output_padding=output_padding)
 
-            print(f"Test shape: {test_shape}")
+            Log.debug(f"Test shape: {test_shape}")
             if test_shape == final:
                 return nn.ConvTranspose2d(1, 1, kernel_size=kernel_size, stride=stride, padding=padding,
                                           output_padding=output_padding, dilation=dilation).to('cuda')
