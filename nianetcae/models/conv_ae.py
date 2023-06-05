@@ -33,6 +33,7 @@ class ConvAutoencoder(BaseAutoencoder, nn.Module):
         self.padding = kwargs['model_params']['padding']
         self.stride = kwargs['model_params']['stride']
         self.output_padding = kwargs['model_params']['output_padding']
+        self.dilation = kwargs['model_params']['dilation']
 
         self.encoding_layers = nn.ModuleList()
         self.decoding_layers = nn.ModuleList()
@@ -82,17 +83,17 @@ class ConvAutoencoder(BaseAutoencoder, nn.Module):
 
             while layers != 0:
                 self.encoding_layers.append(
-                    nn.Conv2d(in_channels=input_shape, out_channels=output_shape, kernel_size=3, stride=2,
-                              padding=1))
+                    nn.Conv2d(in_channels=input_shape, out_channels=output_shape, kernel_size=self.kernel_size, stride=self.stride,
+                              padding=self.padding, dilation=self.dilation))
 
                 if layers == max_layers:
                     self.decoding_layers.insert(0, nn.ConvTranspose2d(in_channels=output_shape,
-                                                                      out_channels=1, kernel_size=3,
-                                                                      stride=2, padding=1, output_padding=1))
+                                                                      out_channels=1, kernel_size=self.kernel_size,
+                                                                      stride=self.stride, padding=self.padding, output_padding=self.output_padding, dilation=self.dilation))
                 else:
                     self.decoding_layers.insert(0, nn.ConvTranspose2d(in_channels=output_shape,
-                                                                      out_channels=input_shape, kernel_size=3,
-                                                                      stride=2, padding=1, output_padding=1))
+                                                                      out_channels=input_shape, kernel_size=self.kernel_size,
+                                                                      stride=self.stride, padding=self.padding, output_padding=self.output_padding, dilation=self.dilation))
 
                 layers = layers - 1
                 input_shape = output_shape
@@ -105,7 +106,14 @@ class ConvAutoencoder(BaseAutoencoder, nn.Module):
 
             output_list = calculate_output_shapes(self.encoding_layers, self.decoding_layers, h_w, )
 
-            last_layer = calculate_last_layer((output_list[-1][0], output_list[-1][0]), h_w)
+            last_layer = calculate_last_layer((output_list[-1][0],
+                                               output_list[-1][0]),
+                                              h_w,
+                                              self.kernel_size,
+                                              self.padding,
+                                              self.stride,
+                                              self.output_padding,
+                                              self.dilation)
             if last_layer is not None:
                 self.decoding_layers.append(last_layer)
 

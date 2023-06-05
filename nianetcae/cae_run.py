@@ -109,8 +109,8 @@ def solve_architecture_problem():
     runner = ExtendedRunner(
         config['logging_params']['save_dir'],
         dimension=DIMENSIONALITY,
-        max_evals=100,
-        runs=1,
+        max_evals=config['nia_search']['evaluations'],
+        runs=config['nia_search']['runs'],
         algorithms=[
             ParticleSwarmAlgorithm(),
             DifferentialEvolution(),
