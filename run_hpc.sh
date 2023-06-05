@@ -8,7 +8,6 @@
 #SBATCH --ntasks=1
 #SBATCH --partition=gpu
 #SBATCH --mem-per-gpu=32GB  # memory per GPU
-#SBATCH --mem-per-cpu=8GB
 #SBATCH --gres=gpu:1
 #SBATCH --time=72:00:00
 
