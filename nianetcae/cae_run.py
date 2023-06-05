@@ -61,11 +61,11 @@ class CONVAEArchitecture(ExtendedProblem):
 
                                   callbacks=[
                                       LearningRateMonitor(),
-                                      BatchSizeFinder(mode="power", steps_per_trial=3),
+                                      # BatchSizeFinder(mode="power", steps_per_trial=3),
                                       FineTuneLearningRateFinder(**config['fine_tune_lr_finder']),
-                                      EarlyStopping(**config['early_stop'],
-                                                    verbose=False,
-                                                    check_finite=True),
+                                      # EarlyStopping(**config['early_stop'],
+                                      #               verbose=False,
+                                      #               check_finite=True),
                                       ModelCheckpoint(save_top_k=1,
                                                       dirpath=os.path.join(tb_logger.log_dir, "checkpoints"),
                                                       monitor="loss",
@@ -109,7 +109,7 @@ def solve_architecture_problem():
     runner = ExtendedRunner(
         config['logging_params']['save_dir'],
         dimension=DIMENSIONALITY,
-        max_evals=500,
+        max_evals=100,
         runs=1,
         algorithms=[
             ParticleSwarmAlgorithm(),

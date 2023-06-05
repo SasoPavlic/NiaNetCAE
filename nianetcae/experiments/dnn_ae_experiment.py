@@ -3,7 +3,7 @@ import torchmetrics
 from lightning.pytorch import LightningModule
 from lightning.pytorch.callbacks import LearningRateFinder
 from torch import Tensor
-
+from log import Log
 from nianetcae.experiments.metrics import ConvAutoencoderDepthLoss, RootMeanAbsoluteError, AbsoluteRelativeDifference, \
     Log10Metric, \
     Delta1, Delta2, Delta3
