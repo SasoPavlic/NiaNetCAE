@@ -38,7 +38,7 @@ class Log:
         cls.logger.addHandler(stream_handler)
 
         # Create and setup file handler
-        file_handler = logging.FileHandler(storage['logger_file'])
+        file_handler = logging.FileHandler(storage['save_dir']+storage['logger_file'])
         file_formater = FileFormatter("%(asctime)s\n%(message)s")
         file_handler.setFormatter(file_formater)
         # Add file handle to logger

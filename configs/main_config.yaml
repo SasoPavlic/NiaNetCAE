@@ -7,23 +7,23 @@ model_params:
 
 data_params:
   data_path: "/data/"
-  data_samples: 1
+  data_samples: 100
   channel_dim: 3
   horizontal_dim: 304
   vertical_dim: 304
-  train_size: 0.65
-  test_size: 0.25
-  val_size: 0.10
-  batch_size: 16
-  num_workers: 0
+  train_size: 0 # Data is already split
+  test_size: 0
+  val_size: 0
+  batch_size: 32
+  num_workers: 24
   pin_memory: True
 
 trainer_params:
-  min_epochs: 100
-  max_epochs: 2000
+  min_epochs: 1
+  max_epochs: 6
 
 fine_tune_lr_finder:
-  tune_n_epochs: 2
+  tune_n_epochs: 3
   lr_finder:
     mode: "exponential" #"linear"
     num_training_steps: 100
@@ -37,12 +37,12 @@ exp_params:
 #TODO Research how to use early stop on NYU dataset
 early_stop:
   monitor: "loss"
-  patience: 50
+  patience: 5
   min_delta: 0.0
   mode: "min"
 
 logging_params:
   name: "ConvAutoencoder"
-  logger_file: "logs/ConvAutoencoder.log"
+  logger_file: "ConvAutoencoder.log"
   save_dir: "logs/"
   db_storage: "logs/solution.db"

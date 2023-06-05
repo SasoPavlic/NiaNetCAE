@@ -19,9 +19,6 @@ from nianetcae.storage.database import SQLiteConnector
 if __name__ == '__main__':
 
     RUN_UUID = uuid.uuid4().hex
-    print(f'Program start: {datetime.now().strftime("%H:%M:%S-%d/%m/%Y")}')
-    print(f"RUN UUID: {RUN_UUID}")
-
     torch.set_float32_matmul_precision("medium")
     parser = argparse.ArgumentParser(description='Generic runner for Convolutional AE models')
     parser.add_argument('--config', '-c',
@@ -42,8 +39,10 @@ if __name__ == '__main__':
     Path(config['logging_params']['save_dir']).mkdir(parents=True, exist_ok=True)
 
     Log.enable(config['logging_params'])
+    Log.info(f'Program start: {datetime.now().strftime("%H:%M:%S-%d/%m/%Y")}')
+    Log.info(f"RUN UUID: {RUN_UUID}")
     Log.header("NiaNetCAE settings")
-    Log.info(config['model_params'])
+    Log.info(config)
 
     conn = SQLiteConnector(config['logging_params']['db_storage'], f"solutions")  # _{RUN_UUID}")
     seed_everything(config['exp_params']['manual_seed'], True)
@@ -57,4 +56,4 @@ if __name__ == '__main__':
     nianetcae.cae_run.datamodule = datamodule
 
     solve_architecture_problem()
-    print(f'\n Program end: {datetime.now().strftime("%H:%M:%S-%d/%m/%Y")}')
+    Log.info(f'\n Program end: {datetime.now().strftime("%H:%M:%S-%d/%m/%Y")}')
