@@ -1,13 +1,18 @@
+nia_search:
+  evaluations: 1000
+  runs: 1
+
 model_params:
   name: 'ConvAutoencoder'
   kernel_size: 3
   stride: 2
   padding: 1
   output_padding: 1
+  dilation: 1
 
 data_params:
   data_path: "/data/"
-  data_samples: 100
+  data_samples: 1
   channel_dim: 3
   horizontal_dim: 304
   vertical_dim: 304
@@ -15,18 +20,18 @@ data_params:
   test_size: 0
   val_size: 0
   batch_size: 32
-  num_workers: 24
+  num_workers: 0
   pin_memory: True
 
 trainer_params:
   min_epochs: 1
-  max_epochs: 6
+  max_epochs: 1
 
 fine_tune_lr_finder:
   tune_n_epochs: 3
   lr_finder:
     mode: "exponential" #"linear"
-    num_training_steps: 100
+    num_training_steps: 3
     attr_name: "learning_rate"
     update_attr: True
     early_stop_threshold: # None # https://github.com/Lightning-AI/lightning/issues/4846#issuecomment-1014148839
