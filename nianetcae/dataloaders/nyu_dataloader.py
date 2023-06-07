@@ -17,7 +17,7 @@ from .nyu_transformer import *
 class DatasetLoader(Dataset):
     def __init__(self, csv_file, transform=None, data_samples=100, batch_size=64):
         csv_file_path = os.getcwd() + csv_file
-        Log.debug(csv_file_path)
+        Log.debug(f"CSV file path: {csv_file_path}")
         self.paths = pd.read_csv(csv_file_path, header=None,
                                  names=['image', 'depth'])
 

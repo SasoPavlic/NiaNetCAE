@@ -22,6 +22,7 @@ class ConvAutoencoder(BaseAutoencoder, nn.Module):
         super(ConvAutoencoder, self).__init__()
 
         y1, y2, y3, y4 = solution
+        #y1, y2, y3, y4 = [0.15213482, 0.91494311, 0.11750588, 0.90819075]
 
         self.id = str(int(time.time())).strip()
         self.batch_size = kwargs['data_params']['batch_size']
@@ -110,13 +111,14 @@ class ConvAutoencoder(BaseAutoencoder, nn.Module):
                                                output_list[-1][0]),
                                               h_w,
                                               self.kernel_size,
-                                              self.padding,
                                               self.stride,
+                                              self.padding,
                                               self.output_padding,
                                               self.dilation)
             if last_layer is not None:
                 self.decoding_layers.append(last_layer)
 
+            Log.info(f"Topology (Encoder + Decoder):\n {self.encoding_layers + self.decoding_layers}")
             Log.debug(f"Layer outputs: {calculate_output_shapes(self.encoding_layers, self.decoding_layers, h_w, )}")
             self.num_layers = len(self.encoding_layers)
             self.bottleneck_size = self.encoding_layers[-1].out_channels
