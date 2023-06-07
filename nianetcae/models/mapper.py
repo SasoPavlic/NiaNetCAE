@@ -184,77 +184,88 @@ def calculate_convolution(batch_size, channel_dim, h_w):
     kernel_size = 3
     stride = 2
     padding = 1
-    output_padding = 0
+    output_padding = 1
     dilation = 1
 
-    layer = nn.Conv2d(3, 16, kernel_size=kernel_size, stride=stride, padding=padding, dilation=dilation).to('cuda')
+    layer = nn.Conv2d(3, 46, kernel_size=kernel_size, stride=stride, padding=padding, dilation=dilation).to('cuda')
     output_tesnsor = input_tensor
     print(
         f" Funkcija: {conv2d_output_shape((output_tesnsor.shape[2], output_tesnsor.shape[3]), kernel_size=kernel_size, stride=stride, padding=padding, dilation=dilation)}")
     output_tesnsor = layer(output_tesnsor)
     print(f"{type(layer)} {layer.in_channels, layer.out_channels}: {output_tesnsor.shape}")
 
-    layer = nn.Conv2d(16, 32, kernel_size=kernel_size, stride=stride, padding=padding, dilation=dilation).to('cuda')
+    layer = nn.Conv2d(46, 92, kernel_size=kernel_size, stride=stride, padding=padding, dilation=dilation).to('cuda')
     print(
         f" Funkcija: {conv2d_output_shape((output_tesnsor.shape[2], output_tesnsor.shape[3]), kernel_size=kernel_size, stride=stride, padding=padding, dilation=dilation)}")
     output_tesnsor = layer(output_tesnsor)
     print(f"{type(layer)} {layer.in_channels, layer.out_channels}: {output_tesnsor.shape}")
 
-    layer = nn.Conv2d(32, 64, kernel_size=kernel_size, stride=stride, padding=padding, dilation=dilation).to('cuda')
+    layer = nn.Conv2d(92, 138, kernel_size=kernel_size, stride=stride, padding=padding, dilation=dilation).to('cuda')
     print(
         f" Funkcija: {conv2d_output_shape((output_tesnsor.shape[2], output_tesnsor.shape[3]), kernel_size=kernel_size, stride=stride, padding=padding, dilation=dilation)}")
     output_tesnsor = layer(output_tesnsor)
     print(f"{type(layer)} {layer.in_channels, layer.out_channels}: {output_tesnsor.shape}")
 
-    layer = nn.Conv2d(64, 128, kernel_size=kernel_size, stride=stride, padding=padding, dilation=dilation).to('cuda')
+    layer = nn.Conv2d(138, 184, kernel_size=kernel_size, stride=stride, padding=padding, dilation=dilation).to('cuda')
     print(
         f" Funkcija: {conv2d_output_shape((output_tesnsor.shape[2], output_tesnsor.shape[3]), kernel_size=kernel_size, stride=stride, padding=padding, dilation=dilation)}")
     output_tesnsor = layer(output_tesnsor)
     print(f"{type(layer)} {layer.in_channels, layer.out_channels}: {output_tesnsor.shape}")
 
-    layer = nn.Conv2d(128, 256, kernel_size=kernel_size, stride=stride, padding=padding, dilation=dilation).to('cuda')
+    layer = nn.Conv2d(184, 230, kernel_size=kernel_size, stride=stride, padding=padding, dilation=dilation).to('cuda')
     print(
         f" Funkcija: {conv2d_output_shape((output_tesnsor.shape[2], output_tesnsor.shape[3]), kernel_size=kernel_size, stride=stride, padding=padding, dilation=dilation)}")
     output_tesnsor = layer(output_tesnsor)
     print(f"{type(layer)} {layer.in_channels, layer.out_channels}: {output_tesnsor.shape}")
 
-    layer = nn.ConvTranspose2d(256, 128, kernel_size=kernel_size, stride=stride, padding=padding,
+    layer = nn.Conv2d(230, 276, kernel_size=kernel_size, stride=stride, padding=padding, dilation=dilation).to('cuda')
+    print(
+        f" Funkcija: {conv2d_output_shape((output_tesnsor.shape[2], output_tesnsor.shape[3]), kernel_size=kernel_size, stride=stride, padding=padding, dilation=dilation)}")
+    output_tesnsor = layer(output_tesnsor)
+    print(f"{type(layer)} {layer.in_channels, layer.out_channels}: {output_tesnsor.shape}")
+
+    layer = nn.ConvTranspose2d(276, 230, kernel_size=kernel_size, stride=stride, padding=padding,
                                output_padding=output_padding, dilation=dilation).to('cuda')
     print(
         f" Funkcija: {convtransp2d_output_shape((output_tesnsor.shape[2], output_tesnsor.shape[3]), kernel_size=kernel_size, dilation=dilation, stride=stride, padding=padding, output_padding=output_padding)}")
     output_tesnsor = layer(output_tesnsor)
     print(f"{type(layer)} {layer.in_channels, layer.out_channels}: {output_tesnsor.shape}")
 
-    layer = nn.ConvTranspose2d(128, 64, kernel_size=kernel_size, stride=stride, padding=padding,
+    layer = nn.ConvTranspose2d(230, 184, kernel_size=kernel_size, stride=stride, padding=padding,
                                output_padding=output_padding, dilation=dilation).to('cuda')
     print(
         f" Funkcija: {convtransp2d_output_shape((output_tesnsor.shape[2], output_tesnsor.shape[3]), kernel_size=kernel_size, dilation=dilation, stride=stride, padding=padding, output_padding=output_padding)}")
     output_tesnsor = layer(output_tesnsor)
     print(f"{type(layer)} {layer.in_channels, layer.out_channels}: {output_tesnsor.shape}")
 
-    layer = nn.ConvTranspose2d(64, 32, kernel_size=kernel_size, stride=stride, padding=padding,
+    layer = nn.ConvTranspose2d(184, 138, kernel_size=kernel_size, stride=stride, padding=padding,
                                output_padding=output_padding, dilation=dilation).to('cuda')
     print(
         f" Funkcija: {convtransp2d_output_shape((output_tesnsor.shape[2], output_tesnsor.shape[3]), kernel_size=kernel_size, dilation=dilation, stride=stride, padding=padding, output_padding=output_padding)}")
     output_tesnsor = layer(output_tesnsor)
     print(f"{type(layer)} {layer.in_channels, layer.out_channels}: {output_tesnsor.shape}")
 
-    layer = nn.ConvTranspose2d(32, 16, kernel_size=kernel_size, stride=stride, padding=padding,
+    layer = nn.ConvTranspose2d(138, 92, kernel_size=kernel_size, stride=stride, padding=padding,
                                output_padding=output_padding, dilation=dilation).to('cuda')
     print(
         f" Funkcija: {convtransp2d_output_shape((output_tesnsor.shape[2], output_tesnsor.shape[3]), kernel_size=kernel_size, dilation=dilation, stride=stride, padding=padding, output_padding=output_padding)}")
     output_tesnsor = layer(output_tesnsor)
     print(f"{type(layer)} {layer.in_channels, layer.out_channels}: {output_tesnsor.shape}")
 
-    layer = nn.ConvTranspose2d(16, 1, kernel_size=kernel_size, stride=stride, padding=padding,
+    layer = nn.ConvTranspose2d(92, 46, kernel_size=kernel_size, stride=stride, padding=padding,
                                output_padding=output_padding, dilation=dilation).to('cuda')
     print(
         f" Funkcija: {convtransp2d_output_shape((output_tesnsor.shape[2], output_tesnsor.shape[3]), kernel_size=kernel_size, dilation=dilation, stride=stride, padding=padding, output_padding=output_padding)}")
     output_tesnsor = layer(output_tesnsor)
     print(f"{type(layer)} {layer.in_channels, layer.out_channels}: {output_tesnsor.shape}")
 
-    layer = nn.ConvTranspose2d(1, 1, kernel_size=kernel_size, stride=stride, padding=137, output_padding=output_padding,
+    layer = nn.ConvTranspose2d(46, 1, kernel_size=kernel_size, stride=stride, padding=padding, output_padding=output_padding,
                                dilation=dilation).to('cuda')
+    output_tesnsor = layer(output_tesnsor)
+    print(f"{type(layer)} {layer.in_channels, layer.out_channels}: {output_tesnsor.shape}")
+
+    layer = nn.ConvTranspose2d(1, 1, kernel_size=kernel_size, stride=2, padding=1, output_padding=144,
+                               dilation=3).to('cuda')
     output_tesnsor = layer(output_tesnsor)
     print(f"{type(layer)} {layer.in_channels, layer.out_channels}: {output_tesnsor.shape}")
 
@@ -264,44 +275,33 @@ def calculate_convolution(batch_size, channel_dim, h_w):
 # Fucntion which calculates the output shape of a convolutional layer
 # It gets the tensor shape and tries to guess the correct output shape by modifiying kernel size, stride and padding
 def calculate_last_layer(current, final, kernel_size=3, stride=2, padding=1, output_padding=1, dilation=1):
+    #calculate_convolution(32,3, (304,304))
 
     Log.debug(f"Task for: {(current[0], current[1])} --> {(final[0], final[1])}")
 
-    if current > final:
-        while True:
-            Log.debug(f"Trying padding: {padding}")
-            test_shape = convtransp2d_output_shape(current,
-                                                   kernel_size=kernel_size,
-                                                   dilation=dilation,
-                                                   stride=stride,
-                                                   padding=padding,
-                                                   output_padding=output_padding)
+    while True:
+        test_shape = convtransp2d_output_shape(current,
+                                               kernel_size=kernel_size,
+                                               dilation=dilation,
+                                               stride=stride,
+                                               padding=padding,
+                                               output_padding=output_padding)
 
-            Log.debug(f"Test shape: {test_shape}")
-            if test_shape == final:
-                return nn.ConvTranspose2d(1, 1, kernel_size=kernel_size, stride=stride, padding=padding,
-                                          output_padding=output_padding, dilation=dilation).to('cuda')
-            else:
-                padding = padding + 1
-                continue
+        #Log.debug(f"Test shape: {test_shape}")
+        if test_shape == final:
+            Log.debug(f"Trying padding: {padding} and output padding: {output_padding}")
+            return nn.ConvTranspose2d(1, 1, kernel_size=kernel_size, stride=stride, padding=padding,
+                                      output_padding=output_padding, dilation=dilation).to('cuda')
+        if test_shape > final:
+            padding = padding + 1
+            continue
 
-    elif current < final:
-        while True:
-            Log.debug(f"Trying output padding: {output_padding}")
-            test_shape = convtransp2d_output_shape(current,
-                                                   kernel_size=kernel_size,
-                                                   dilation=dilation,
-                                                   stride=stride,
-                                                   padding=padding,
-                                                   output_padding=output_padding)
-
-            Log.debug(f"Test shape: {test_shape}")
-            if test_shape == final:
-                return nn.ConvTranspose2d(1, 1, kernel_size=kernel_size, stride=stride, padding=padding,
-                                          output_padding=output_padding, dilation=dilation).to('cuda')
-            else:
-                output_padding = output_padding + 1
-                continue
+        elif test_shape < final:
+            output_padding = output_padding + 1
+            continue
+        else:
+            Log.error(
+                f"Something went wrong calculating the last layer\n padding:{padding}, output_padding:{output_padding}")
 
 
 def network_prunning(encoding_layers, decoding_layers, h_w):
