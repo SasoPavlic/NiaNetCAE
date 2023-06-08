@@ -82,7 +82,7 @@ class CONVAEArchitecture(ExtendedProblem):
 
                 CADL = experiment.CADL_score.item()
 
-            complexity = (model.num_layers * 100) + (model.bottleneck_size * 10)
+            complexity = (len(model.encoding_layers) * 100) + (model.bottleneck_size * 10)
             fitness = (CADL * 1000) + (complexity / 100)
 
             Log.debug(tabulate([[CADL, complexity, fitness]], headers=["RMSE", "AUC", "Complexity", "Fitness"],
