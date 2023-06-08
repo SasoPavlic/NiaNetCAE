@@ -22,7 +22,7 @@ class ConvAutoencoder(BaseAutoencoder, nn.Module):
         super(ConvAutoencoder, self).__init__()
 
         y1, y2, y3, y4 = solution
-        #y1, y2, y3, y4 = [0.15213482, 0.91494311, 0.11750588, 0.90819075]
+        #y1, y2, y3, y4 = [0.00261558, 0.35621844, 0.1866134,  0.17677919]
 
         self.id = str(int(time.time())).strip()
         self.batch_size = kwargs['data_params']['batch_size']
@@ -43,11 +43,7 @@ class ConvAutoencoder(BaseAutoencoder, nn.Module):
                                          (self.horizontal_dim, self.vertical_dim), self.padding, self.stride)
         self.num_layers = map_num_layers(y2, self.layer_step, kwargs['data_params']['horizontal_dim'])
         self.activation, self.activation_name = map_activation(y3, self)
-
-        self.bottleneck_size = 0
-
         self.generate_autoencoder()
-
         self.optimizer_name = map_optimizer(y4, self)
         self.get_hash()
 
@@ -118,13 +114,14 @@ class ConvAutoencoder(BaseAutoencoder, nn.Module):
             if last_layer is not None:
                 self.decoding_layers.append(last_layer)
 
+            output_list = calculate_output_shapes(self.encoding_layers, self.decoding_layers, h_w, )
             Log.info(f"Topology (Encoder + Decoder):\n {self.encoding_layers + self.decoding_layers}")
-            Log.debug(f"Layer outputs: {calculate_output_shapes(self.encoding_layers, self.decoding_layers, h_w, )}")
-            self.num_layers = len(self.encoding_layers)
-            self.bottleneck_size = self.encoding_layers[-1].out_channels
-
+            Log.debug(f"Layer outputs: {output_list}")
+            self.bottleneck_size = int(sum(output_list[len(self.encoding_layers)-1])/2)
             Log.debug("+++++++++++++++++++++++++++++++++++++++END ARCHITECTURE "
                   "MODIFICATION+++++++++++++++++++++++++++++++++++++++")
+        else:
+            self.bottleneck_size = 0
 
     def get_hash(self):
 
