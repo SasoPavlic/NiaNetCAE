@@ -5,7 +5,9 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 
+from log import Log
 
+infinity = float(99999999999)
 class SQLiteConnector():
     def __init__(self, db_file, table_name):
         self.db_file = db_file
@@ -22,7 +24,7 @@ class SQLiteConnector():
             existing_entry = pd.read_sql(f"select * from {self.table_name} where hash_id='{hash_id}'", self.connection)
             self.connection.close()
         except Exception as e:
-            print(f"Could not get existing entries:\n {e}")
+            Log.error(f"Could not get existing entries:\n {e}")
             existing_entry = pd.DataFrame()
 
         return existing_entry
@@ -34,7 +36,7 @@ class SQLiteConnector():
                                        self.connection)
             self.connection.close()
         except Exception as e:
-            print(e)
+            Log.error(e)
 
         best_solution_json = best_results['solution_array'][0]
         best_solution = np.array(json.loads(best_solution_json))
@@ -42,7 +44,9 @@ class SQLiteConnector():
 
         return best_solution, best_algorithm
 
-    def post_entries(self, model, fitness, solution, CADL, complexity, alg_name, iteration):
+    def post_entries(self, model, fitness, solution, complexity, alg_name, iteration, MSE=infinity,
+                     RMSE=infinity, MAE=float('inf'), ABS_REL=infinity, LOG10=infinity, DELTA1=infinity,
+                     DELTA2=infinity, DELTA3=infinity, CADL=infinity):
         try:
             self.create_connection()
             json_solution = json.dumps(solution.tolist())
@@ -57,15 +61,23 @@ class SQLiteConnector():
                                'activation': str(model.activation_name),
                                'optimizer': str(model.optimizer_name),
                                'bottleneck_size': int(model.bottleneck_size),
-                               'CADL': float(CADL),
                                'complexity': int(complexity),
+                               'MSE': round(float(MSE)),
+                               'RMSE': round(float(RMSE)),
+                               'MAE': round(float(MAE)),
+                               'ABS_REL': round(float(ABS_REL)),
+                               'LOG10': round(float(LOG10)),
+                               'DELTA1': round(float(DELTA1)),
+                               'DELTA2': round(float(DELTA2)),
+                               'DELTA3': round(float(DELTA3)),
+                               'CADL': round(float(CADL)),
                                'fitness': int(fitness),
                                'solution_array': str(json_solution).strip()
                                }, index=[0])
             df.to_sql(self.table_name, self.connection, if_exists='append', index=False)  # writes to file
             self.connection.close()
         except Exception as e:
-            print(e)
+            Log.error(e)
 
     def create_table(self):
         try:
@@ -82,15 +94,23 @@ class SQLiteConnector():
                             activation      TEXT,
                             optimizer       TEXT,
                             bottleneck_size INTEGER,
-                            CADL            REAL,
                             complexity      INTEGER,
                             fitness         INTEGER,
+                            MSE            REAL,
+                            RMSE            REAL,
+                            MAE            REAL,
+                            ABS_REL            REAL,
+                            LOG10            REAL,
+                            DELTA1            REAL,
+                            DELTA2            REAL,
+                            DELTA3            REAL,
+                            CADL            REAL,
                             solution_array  TEXT
                         );''')
             # committing our connection
             self.connection.commit()
         except Exception as e:
-            print(e)
+            Log.error(e)
 
     def create_connection(self):
         """ create a database connection to the SQLite database
@@ -106,4 +126,4 @@ class SQLiteConnector():
             # close our connection
 
         except Exception as e:
-            print(e)
+            Log.error(e)
