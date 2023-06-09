@@ -15,27 +15,32 @@ from .nyu_transformer import *
 
 
 class DatasetLoader(Dataset):
-    def __init__(self, csv_file, transform=None, data_samples=100, batch_size=64):
+    def __init__(self, csv_file, transform=None, data_percentage=100, batch_size=32, data_size=100):
         csv_file_path = os.getcwd() + csv_file
         Log.debug(f"CSV file path: {csv_file_path}")
         self.paths = pd.read_csv(csv_file_path, header=None,
                                  names=['image', 'depth'])
 
-        if data_samples > 100:
-            data_samples = 100
+        if data_percentage > 100:
+            data_percentage = 100
 
         all_data_samples, batched_data_samples = len(self.paths), len(self.paths)
-        all_data_samples = int(all_data_samples * (data_samples / 100))
+        all_data_samples = int(all_data_samples * (data_size / 100))
+        all_data_samples = int(all_data_samples * (data_percentage / 100))
 
 
-        if all_data_samples % batch_size == 0:
-            batched_data_samples = all_data_samples
-        else:
-            batched_data_samples = all_data_samples - (all_data_samples % batch_size)
+        # if all_data_samples % batch_size == 0:
+        #     batched_data_samples = all_data_samples
+        # else:
+        #     batched_data_samples = all_data_samples - (all_data_samples % batch_size)
+        #
+        # if batched_data_samples <=0:
+        #     batched_data_samples = batch_size
+        #
+        # self.paths = self.paths.head(int(batched_data_samples))
+        # self.transform = transform
 
-        if batched_data_samples <=0:
-            batched_data_samples = batch_size
-        self.paths = self.paths.head(int(batched_data_samples))
+        self.paths = self.paths.head(int(all_data_samples))
         self.transform = transform
 
         super(DatasetLoader, self).__init__()
@@ -57,9 +62,9 @@ class DatasetLoader(Dataset):
 class NYUDataset(LightningDataModule):
     def __init__(
             self,
-            data_samples: int = 100,
             data_path: str = '/data/',
-            batch_size: int = 64,
+            data_percentage: int = 100,
+            batch_size: int = 32,
             channel_dim: int = 3,
             horizontal_dim: int = 300,
             vertical_dim: int = 300,
@@ -72,7 +77,7 @@ class NYUDataset(LightningDataModule):
     ):
         super().__init__()
 
-        self.data_samples = data_samples
+        self.data_percentage = data_percentage
         self.data_path = data_path
         self.batch_size = batch_size
         self.channel_dim = channel_dim
@@ -118,8 +123,9 @@ class NYUDataset(LightningDataModule):
         self.train_dataset = DatasetLoader(
             csv_file=self.data_path + "nyu2_train.csv",
             transform=train_transform,
-            data_samples=self.data_samples,
-            batch_size=self.batch_size)
+            data_percentage=self.data_percentage,
+            batch_size=self.batch_size,
+            data_size=self.train_size)
 
         Log.debug(f"Train dataset size: {self.train_dataset.paths.shape[0]}")
         __imagenet_stats = {'mean': [0.485, 0.456, 0.406],
@@ -139,10 +145,31 @@ class NYUDataset(LightningDataModule):
         self.test_dataset = DatasetLoader(
             csv_file=self.data_path + "nyu2_test.csv",
             transform=test_transform,
-            data_samples=self.data_samples,
-            batch_size=self.batch_size)
+            data_percentage=self.data_percentage,
+            batch_size=self.batch_size,
+            data_size=self.test_size)
 
         Log.debug(f"Test dataset size: {self.test_dataset.paths.shape[0]}")
+
+        val_transform = transforms.Compose(
+            [
+                Scale(240),
+                CenterCrop([self.horizontal_dim, self.vertical_dim], [self.horizontal_dim, self.vertical_dim]),
+                ToTensor(is_test=True),
+                Normalize(__imagenet_stats['mean'],
+                          __imagenet_stats['std'])
+            ]
+
+        )
+
+        self.val_dataset = DatasetLoader(
+            csv_file=self.data_path + "nyu2_train.csv",
+            transform=val_transform,
+            data_percentage=self.data_percentage,
+            batch_size=self.batch_size,
+            data_size=self.val_size)
+
+        Log.debug(f"Validation dataset size: {self.val_dataset.paths.shape[0]}")
 
     # TODO Implement re-usable datalaoder process
     # https://github.com/pytorch/pytorch/issues/15849#issuecomment-573921048
@@ -162,6 +189,18 @@ class NYUDataset(LightningDataModule):
     def test_dataloader(self) -> DataLoader:
         data = DataLoader(
             self.test_dataset,
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+            shuffle=False,
+            pin_memory=self.pin_memory,
+            # persistent_workers=True
+        )
+
+        return data
+
+    def val_dataloader(self) -> DataLoader:
+        data = DataLoader(
+            self.val_dataset,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             shuffle=False,

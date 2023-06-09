@@ -6,7 +6,7 @@ from torch import Tensor
 from log import Log
 from nianetcae.experiments.metrics import ConvAutoencoderDepthLoss, RootMeanAbsoluteError, AbsoluteRelativeDifference, \
     Log10Metric, \
-    Delta1, Delta2, Delta3
+    Delta1, Delta2, Delta3, Metrics
 from nianetcae.models.conv_ae import ConvAutoencoder
 
 
@@ -50,6 +50,7 @@ class DNNAEExperiment(LightningModule):
         self.curr_device = None
         self.hold_graph = False
         self.train_loss = None
+        self.val_loss = None
 
         self.MSE_metric = torchmetrics.MeanSquaredError()
         self.RMSE_metric = RootMeanAbsoluteError()
@@ -73,6 +74,18 @@ class DNNAEExperiment(LightningModule):
             self.hold_graph = self.params['retain_first_backpass']
         except:
             pass
+
+    def get_metrics(self):
+
+        return Metrics(self.MSE_score.item(),
+                       self.RMSE_score.item(),
+                       self.MAE_score.item(),
+                       self.ABS_REL_score.item(),
+                       self.LOG10_score.item(),
+                       self.DELTA1_score.item(),
+                       self.DELTA2_score.item(),
+                       self.DELTA3_score.item(),
+                       self.CADL_score.item())
 
     def forward(self, input: Tensor, **kwargs) -> Tensor:
         return self.model(input, **kwargs)
@@ -120,6 +133,22 @@ class DNNAEExperiment(LightningModule):
 
         torch.cuda.empty_cache()
         return self.train_loss['loss']
+
+    def validation_step(self, batch, batch_idx, optimizer_idx=0):
+        torch.cuda.empty_cache()
+        results = self.forward(batch)
+        self.curr_device = batch['image'].device
+        self.val_loss = self.model.loss_function(self.curr_device,
+                                                 **results,
+                                                 optimizer_idx=optimizer_idx,
+                                                 batch_idx=batch_idx)
+
+        self.log_dict({key: val.item() for key, val in self.val_loss.items()}, prog_bar=True, sync_dist=True,
+                      on_step=False,
+                      on_epoch=True, batch_size=batch['image'].shape[0])
+
+        torch.cuda.empty_cache()
+        return self.val_loss['loss']
 
     def test_step(self, batch, batch_idx, optimizer_idx=0):
         torch.cuda.empty_cache()
@@ -173,15 +202,15 @@ class DNNAEExperiment(LightningModule):
         self.DELTA3_score = self.DELTA3_metric.compute()
         self.CADL_score = self.CADL_metric.compute()
 
-        self.log_dict(dict({'MSE': self.MSE_score,
-                            'RMSE': self.RMSE_score,
-                            'MAE': self.MAE_score,
-                            'ABS_REL': self.ABS_REL_score,
-                            'LOG10': self.LOG10_score,
-                            'DELTA1': self.DELTA1_score,
-                            'DELTA2': self.DELTA2_score,
-                            'DELTA3': self.DELTA3_score,
-                            'CADL': self.CADL_score}),
+        self.log_dict(dict({'MSE': self.MSE_score, #Low is better
+                            'RMSE': self.RMSE_score,#Low is better
+                            'MAE': self.MAE_score, #Low is better
+                            'ABS_REL': self.ABS_REL_score, #Low is better
+                            'LOG10': self.LOG10_score, #Low is better
+                            'DELTA1': self.DELTA1_score, #High is better
+                            'DELTA2': self.DELTA2_score,#High is better
+                            'DELTA3': self.DELTA3_score,#High is better
+                            'CADL': self.CADL_score}), #Low is better
                       prog_bar=True, sync_dist=True, on_step=False,
                       on_epoch=True, batch_size=batch['image'].shape[0])
 

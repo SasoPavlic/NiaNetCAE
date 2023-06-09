@@ -45,7 +45,9 @@ class CONVAEArchitecture(ExtendedProblem):
             # TODO Find a more optimal way
             """Punishing bad decisions"""
             if len(model.encoding_layers) == 0 or len(model.decoding_layers) == 0:
-                CADL = int(9e10)
+                fitness = int(9e10)
+                complexity = int(9e10)
+                conn.post_entries(model, fitness, solution, complexity, alg_name, self.iteration,)
             else:
                 experiment = DNNAEExperiment(model, config['exp_params'], config['data_params']['horizontal_dim'])
                 tb_logger = TensorBoardLogger(save_dir=config['logging_params']['save_dir'],
@@ -63,13 +65,13 @@ class CONVAEArchitecture(ExtendedProblem):
                                       LearningRateMonitor(),
                                       # BatchSizeFinder(mode="power", steps_per_trial=3),
                                       FineTuneLearningRateFinder(**config['fine_tune_lr_finder']),
-                                      # EarlyStopping(**config['early_stop'],
-                                      #               verbose=False,
-                                      #               check_finite=True),
-                                      ModelCheckpoint(save_top_k=1,
-                                                      dirpath=os.path.join(tb_logger.log_dir, "checkpoints"),
-                                                      monitor="loss",
-                                                      save_last=True)
+                                      EarlyStopping(**config['early_stop'],
+                                                    verbose=False,
+                                                    check_finite=True),
+                                      # ModelCheckpoint(save_top_k=1,
+                                      #                 dirpath=os.path.join(tb_logger.log_dir, "checkpoints"),
+                                      #                 monitor="loss",
+                                      #                 save_last=True)
                                   ],
                                   # strategy=DDPPlugin(find_unused_parameters=False),
                                   **config['trainer_params'])
@@ -80,15 +82,23 @@ class CONVAEArchitecture(ExtendedProblem):
                 Log.info(f'\nTraining end: {datetime.now().strftime("%H:%M:%S-%d/%m/%Y")}')
                 trainer.test(experiment, datamodule=datamodule)
 
-                CADL = experiment.CADL_score.item()
+                metrics = experiment.get_metrics()
+                complexity = (len(model.encoding_layers) * 100) + (model.bottleneck_size * 10)
+                # TODO Define fitness function
+                fitness = (metrics.CADL * 1000) + (complexity / 100)
 
-            complexity = (len(model.encoding_layers) * 100) + (model.bottleneck_size * 10)
-            fitness = (CADL * 1000) + (complexity / 100)
-
-            Log.debug(tabulate([[CADL, complexity, fitness]], headers=["RMSE", "AUC", "Complexity", "Fitness"],
-                           tablefmt="pretty"))
-            conn.post_entries(model, fitness, solution, CADL, complexity, alg_name, self.iteration)
-            torch.save(model.state_dict(), path + f"/model.pt")
+                Log.debug(tabulate([[complexity, fitness]], headers=["Complexity", "Fitness"],
+                                   tablefmt="pretty"))
+                conn.post_entries(model, fitness, solution, complexity, alg_name, self.iteration,
+                                  metrics.MSE,
+                                  metrics.RMSE,
+                                  metrics.MAE,
+                                  metrics.ABS_REL,
+                                  metrics.LOG10,
+                                  metrics.DELTA1,
+                                  metrics.DELTA2,
+                                  metrics.CADL)
+                torch.save(model.state_dict(), path + f"/model.pt")
 
             # TODO Fix when NaN
             if np.isnan(fitness):

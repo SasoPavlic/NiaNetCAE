@@ -22,7 +22,7 @@ class ConvAutoencoder(BaseAutoencoder, nn.Module):
         super(ConvAutoencoder, self).__init__()
 
         y1, y2, y3, y4 = solution
-        #y1, y2, y3, y4 = [0.00261558, 0.35621844, 0.1866134,  0.17677919]
+        #y1, y2, y3, y4 = [0.3583089981987728, 0.11401037728457997, 0.9736511431646513, 0.0436744332114708]
 
         self.id = str(int(time.time())).strip()
         self.batch_size = kwargs['data_params']['batch_size']

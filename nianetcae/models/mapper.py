@@ -7,11 +7,6 @@ from torch import nn
 
 from log import Log
 
-"""
-Convolutional output shape calculation is from this source:
-https://discuss.pytorch.org/t/utility-function-for-calculating-the-shape-of-a-conv-output/11173/6
-"""
-
 
 def map_layer_step(gene, channel_size, kernel_size, h_w, padding, stride):
     gene = np.array([gene])
@@ -259,7 +254,8 @@ def calculate_convolution(batch_size, channel_dim, h_w):
     output_tesnsor = layer(output_tesnsor)
     print(f"{type(layer)} {layer.in_channels, layer.out_channels}: {output_tesnsor.shape}")
 
-    layer = nn.ConvTranspose2d(46, 1, kernel_size=kernel_size, stride=stride, padding=padding, output_padding=output_padding,
+    layer = nn.ConvTranspose2d(46, 1, kernel_size=kernel_size, stride=stride, padding=padding,
+                               output_padding=output_padding,
                                dilation=dilation).to('cuda')
     output_tesnsor = layer(output_tesnsor)
     print(f"{type(layer)} {layer.in_channels, layer.out_channels}: {output_tesnsor.shape}")
@@ -272,7 +268,7 @@ def calculate_convolution(batch_size, channel_dim, h_w):
     pass
 
 
-# Fucntion which calculates the output shape of a convolutional layer
+# Function which calculates the output shape of a convolutional layer
 # It gets the tensor shape and tries to guess the correct output shape by modifiying kernel size, stride and padding
 def calculate_last_layer(current, final, kernel_size=3, stride=2, padding=1, output_padding=1, dilation=1):
     #calculate_convolution(32,3, (304,304))
@@ -287,7 +283,7 @@ def calculate_last_layer(current, final, kernel_size=3, stride=2, padding=1, out
                                                padding=padding,
                                                output_padding=output_padding)
 
-        #Log.debug(f"Test shape: {test_shape}")
+        # Log.debug(f"Test shape: {test_shape}")
         if test_shape == final:
             Log.debug(f"Trying padding: {padding} and output padding: {output_padding}")
             return nn.ConvTranspose2d(1, 1, kernel_size=kernel_size, stride=stride, padding=padding,
@@ -315,6 +311,11 @@ def network_prunning(encoding_layers, decoding_layers, h_w):
 
 
 def calculate_output_shapes(encoding_layers, decoding_layers, h_w):
+    """
+    Convolutional output shape calculation is from this source:
+    https://discuss.pytorch.org/t/utility-function-for-calculating-the-shape-of-a-conv-output/11173/6
+    """
+
     tensor_shapes = list()
     output_tensors = list()
     input_temp = h_w[0]

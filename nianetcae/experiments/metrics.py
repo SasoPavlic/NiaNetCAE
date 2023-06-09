@@ -9,6 +9,30 @@ from torch import tensor, Tensor, nn
 from torch.autograd import Variable
 
 
+class Metrics:
+    def __init__(self, MSE, RMSE, MAE, ABS_REL, LOG10, DELTA1, DELTA2, DELTA3, CADL):
+        self.MSE = self.fix_number(MSE)
+        self.RMSE = self.fix_number(RMSE)
+        self.MAE = self.fix_number(MAE)
+        self.ABS_REL = self.fix_number(ABS_REL)
+        self.LOG10 = self.fix_number(LOG10)
+        self.DELTA1 = self.fix_number(DELTA1)
+        self.DELTA2 = self.fix_number(DELTA2)
+        self.DELTA3 = self.fix_number(DELTA3)
+        self.CADL = self.fix_number(CADL)
+
+    def fix_number(self, num):
+        if math.isnan(num):
+            return 0  # Replace NaN with 0
+        elif math.isinf(num):
+            if num > 0:
+                return float(99999999999)  # Replace positive infinity
+            else:
+                return float(99999999999)  # Replace negative infinity
+        else:
+            return num  # Return the number if it is neither NaN nor infinite
+
+
 class RMSELoss(nn.Module):
     def __init__(self):
         super().__init__()
