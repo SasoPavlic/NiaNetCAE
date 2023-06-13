@@ -69,18 +69,33 @@ class RootMeanAbsoluteError(torchmetrics.Metric):
 class AbsoluteRelativeDifference(torchmetrics.Metric):
     def __init__(self):
         super().__init__()
-        self.add_state("abs_rel_sum", default=torch.tensor(0.0), dist_reduce_fx="sum")
-        self.add_state("total_count", default=torch.tensor(0), dist_reduce_fx="sum")
+        self.add_state("absolute_difference", default=torch.tensor(0.0), dist_reduce_fx="sum")
+        self.add_state("denominator", default=torch.tensor(0.0), dist_reduce_fx="sum")
 
-    def update(self, preds: torch.Tensor, target: torch.Tensor):
-        abs_diff = torch.abs(preds - target)
-        rel_diff = abs_diff / target
-        abs_rel = torch.mean(rel_diff)
-        self.abs_rel_sum += torch.sum(abs_rel)
-        self.total_count += target.numel()
+    def update(self, tensor1, tensor2):
+        absolute_difference = torch.abs(tensor1 - tensor2)
+        denominator = torch.abs(tensor1)
+
+        # Handle zero values
+        zero_mask = (tensor1 == 0) & (tensor2 == 0)
+        absolute_difference[zero_mask] = 0.0
+        denominator[zero_mask] = 1.0  # Avoid division by zero
+
+        # Handle negative values
+        negative_mask = (tensor1 < 0) | (tensor2 < 0)
+        absolute_difference[negative_mask] = 0.0
+        denominator[negative_mask] = 1.0  # Avoid division by zero
+
+        self.absolute_difference += torch.sum(absolute_difference)
+        self.denominator += torch.sum(denominator)
 
     def compute(self):
-        return self.abs_rel_sum / self.total_count
+        relative_difference = torch.zeros_like(self.denominator)
+        non_zero_mask = self.denominator != 0
+        relative_difference[non_zero_mask] = self.absolute_difference[non_zero_mask] / self.denominator[non_zero_mask]
+        return relative_difference.mean()
+
+
 
 
 class ConvAutoencoderDepthLoss(torchmetrics.Metric):
@@ -106,17 +121,41 @@ class ConvAutoencoderDepthLoss(torchmetrics.Metric):
 class Log10Metric(torchmetrics.Metric):
     def __init__(self):
         super().__init__()
-        self.add_state("log10_sum", default=torch.tensor(0.0), dist_reduce_fx="sum")
-        self.add_state("total_count", default=torch.tensor(0), dist_reduce_fx="sum")
+        self.add_state("num_examples", default=torch.tensor(0), dist_reduce_fx="sum")
+        self.add_state("sum_log10_diff", default=torch.tensor(0.0), dist_reduce_fx="sum")
 
-    def update(self, preds: torch.Tensor, target: torch.Tensor):
-        log10_diff = torch.log10(preds) - torch.log10(target)
-        log10_metric = torch.mean(torch.abs(log10_diff))
-        self.log10_sum += torch.sum(log10_metric)
-        self.total_count += target.numel()
+    def update(self, predictions, targets):
+        log10_predictions = torch.log10(predictions)
+        log10_targets = torch.log10(targets)
+
+        # Handle edge cases where logarithm is undefined
+        log10_predictions[torch.isnan(log10_predictions)] = 0.0
+        log10_targets[torch.isnan(log10_targets)] = 0.0
+
+        # Handle zero predictions and zero targets
+        zero_mask = (predictions == 0) & (targets == 0)
+        log10_predictions[zero_mask] = 0.0
+        log10_targets[zero_mask] = 0.0
+
+        # Handle negative predictions or targets
+        negative_mask = (predictions < 0) | (targets < 0)
+        log10_predictions[negative_mask] = 0.0
+        log10_targets[negative_mask] = 0.0
+
+        absolute_difference = torch.abs(log10_predictions - log10_targets)
+
+        # Handle infinite predictions or targets
+        infinite_mask = (~torch.isfinite(log10_predictions)) | (~torch.isfinite(log10_targets))
+        absolute_difference[infinite_mask] = 0.0
+
+        relative_difference = absolute_difference / (torch.abs(log10_targets) + 1e-8)
+        relative_difference[torch.isnan(relative_difference)] = 0.0
+
+        self.sum_log10_diff += torch.sum(relative_difference)
+        self.num_examples += predictions.numel()
 
     def compute(self):
-        return self.log10_sum / self.total_count
+        return self.sum_log10_diff / self.num_examples
 
 
 class Delta1(torchmetrics.Metric):

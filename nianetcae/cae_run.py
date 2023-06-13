@@ -83,9 +83,12 @@ class CONVAEArchitecture(ExtendedProblem):
                 trainer.test(experiment, datamodule=datamodule)
 
                 metrics = experiment.get_metrics()
+                error_x = metrics.MSE + metrics.RMSE + metrics.MAE + metrics.ABS_REL + metrics.LOG10
+                error_y = metrics.DELTA1 + metrics.DELTA2 + metrics.DELTA3
                 complexity = (len(model.encoding_layers) * 100) + (model.bottleneck_size * 10)
-                # TODO Define fitness function
-                fitness = (metrics.CADL * 1000) + (complexity / 100)
+                C_MAX_FITNESS = 10000
+
+                fitness = C_MAX_FITNESS - (0.40 * error_x) - (0.40 * error_y) - (0.20 * complexity)
 
                 Log.debug(tabulate([[complexity, fitness]], headers=["Complexity", "Fitness"],
                                    tablefmt="pretty"))
@@ -97,6 +100,7 @@ class CONVAEArchitecture(ExtendedProblem):
                                   metrics.LOG10,
                                   metrics.DELTA1,
                                   metrics.DELTA2,
+                                  metrics.DELTA3,
                                   metrics.CADL)
                 torch.save(model.state_dict(), path + f"/model.pt")
 

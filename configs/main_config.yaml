@@ -28,10 +28,10 @@ trainer_params:
   max_epochs: 1 #20
 
 fine_tune_lr_finder:
-  tune_n_epochs: 3
+  tune_n_epochs: 5
   lr_finder:
     mode: "exponential" #"linear"
-    num_training_steps: 3
+    num_training_steps: 100
     attr_name: "learning_rate"
     update_attr: True
     early_stop_threshold: # None # https://github.com/Lightning-AI/lightning/issues/4846#issuecomment-1014148839
@@ -39,7 +39,7 @@ fine_tune_lr_finder:
 exp_params:
   weight_decay: 0.0
   manual_seed: 1265
-#TODO Research how to use early stop on NYU dataset (on validation step)
+
 early_stop:
   monitor: "loss"
   patience: 3

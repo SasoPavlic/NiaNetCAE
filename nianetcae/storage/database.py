@@ -44,9 +44,16 @@ class SQLiteConnector():
 
         return best_solution, best_algorithm
 
-    def post_entries(self, model, fitness, solution, complexity, alg_name, iteration, MSE=infinity,
-                     RMSE=infinity, MAE=float('inf'), ABS_REL=infinity, LOG10=infinity, DELTA1=infinity,
-                     DELTA2=infinity, DELTA3=infinity, CADL=infinity):
+    def post_entries(self, model, fitness, solution, complexity, alg_name, iteration,
+                     MSE=infinity,
+                     RMSE=infinity,
+                     MAE=infinity,
+                     ABS_REL=infinity,
+                     LOG10=infinity,
+                     DELTA1=infinity,
+                     DELTA2=infinity,
+                     DELTA3=infinity,
+                     CADL=infinity):
         try:
             self.create_connection()
             json_solution = json.dumps(solution.tolist())
@@ -62,15 +69,15 @@ class SQLiteConnector():
                                'optimizer': str(model.optimizer_name),
                                'bottleneck_size': int(model.bottleneck_size),
                                'complexity': int(complexity),
-                               'MSE': round(float(MSE)),
-                               'RMSE': round(float(RMSE)),
-                               'MAE': round(float(MAE)),
-                               'ABS_REL': round(float(ABS_REL)),
-                               'LOG10': round(float(LOG10)),
-                               'DELTA1': round(float(DELTA1)),
-                               'DELTA2': round(float(DELTA2)),
-                               'DELTA3': round(float(DELTA3)),
-                               'CADL': round(float(CADL)),
+                               'MSE': float(MSE),
+                               'RMSE': float(RMSE),
+                               'MAE': float(MAE),
+                               'ABS_REL': float(ABS_REL),
+                               'LOG10': float(LOG10),
+                               'DELTA1': float(DELTA1),
+                               'DELTA2': float(DELTA2),
+                               'DELTA3': float(DELTA3),
+                               'CADL': float(CADL),
                                'fitness': int(fitness),
                                'solution_array': str(json_solution).strip()
                                }, index=[0])
