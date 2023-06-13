@@ -17,6 +17,9 @@ poetry add $( cat requirements.txt )
 echo "Installing dependencies..."
 poetry install
 
+# Install CUDA
+poetry run poe autoinstall-torch-cuda
+
 # Run tests
 echo "Running tests..."
 poetry run pytest
