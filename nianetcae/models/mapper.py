@@ -8,7 +8,7 @@ from torch import nn
 from log import Log
 
 
-def map_layer_step(gene, channel_size, kernel_size, h_w, padding, stride):
+def map_layer_step(gene, h_w):
     gene = np.array([gene])
     bins = []
     value = 1 / h_w[0]
