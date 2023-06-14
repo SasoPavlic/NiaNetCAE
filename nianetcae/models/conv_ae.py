@@ -11,7 +11,6 @@ import torchmetrics.image
 from log import Log
 from nianetcae.models.mapper import *
 
-from nianetcae.experiments.metrics import RMSELoss
 from nianetcae.models.base import BaseAutoencoder
 from nianetcae.models.types_ import *
 from lightning.pytorch import LightningModule
@@ -39,8 +38,7 @@ class ConvAutoencoder(BaseAutoencoder, nn.Module):
         self.encoding_layers = nn.ModuleList()
         self.decoding_layers = nn.ModuleList()
 
-        self.layer_step = map_layer_step(y1, self.channel_dim, self.kernel_size,
-                                         (self.horizontal_dim, self.vertical_dim), self.padding, self.stride)
+        self.layer_step = map_layer_step(y1, (self.horizontal_dim, self.vertical_dim))
         self.num_layers = map_num_layers(y2, self.layer_step, kwargs['data_params']['horizontal_dim'])
         self.activation, self.activation_name = map_activation(y3, self)
         self.generate_autoencoder()
@@ -186,7 +184,7 @@ class ConvAutoencoder(BaseAutoencoder, nn.Module):
         :param kwargs:
         :return metrics:
         """
-        criterionRMSE = RMSELoss()
+        criterionRMSE = nn.MSELoss()
         l1_criterion = nn.L1Loss()
         ssim = torchmetrics.image.StructuralSimilarityIndexMeasure().to(curr_device)
 
@@ -198,7 +196,7 @@ class ConvAutoencoder(BaseAutoencoder, nn.Module):
         loss_ssim = (1 - ssim(output, depth)) * 0.5
 
         loss_l1 = l1_criterion(output, depth)
-        loss_RMSE = criterionRMSE(output, depth)
+        loss_RMSE = torch.sqrt(criterionRMSE(output, depth))
 
         loss = loss_depth + loss_ssim + loss_l1 + loss_RMSE
 

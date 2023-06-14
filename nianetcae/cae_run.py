@@ -2,7 +2,7 @@ from pathlib import Path
 
 import torch
 from lightning.pytorch import Trainer
-from lightning.pytorch.callbacks import LearningRateMonitor, ModelCheckpoint, EarlyStopping, BatchSizeFinder
+from lightning.pytorch.callbacks import LearningRateMonitor, EarlyStopping
 from lightning.pytorch.loggers import TensorBoardLogger
 from niapy.algorithms.basic import ParticleSwarmAlgorithm, DifferentialEvolution, FireflyAlgorithm, GeneticAlgorithm
 from niapy.algorithms.modified import SelfAdaptiveDifferentialEvolution
@@ -17,6 +17,41 @@ RUN_UUID = None
 config = None
 conn = None
 datamodule = None
+
+
+def calculate_fitness(model, experiment):
+    error_x = experiment.metrics.MSE + experiment.metrics.RMSE + experiment.metrics.MAE + experiment.metrics.ABS_REL + experiment.metrics.LOG10
+    error_y = experiment.metrics.DELTA1 + experiment.metrics.DELTA2 + experiment.metrics.DELTA3
+
+    C_LAYERS = 10000
+    C_BOTTLENECK = 1000
+    C_MAX_FITNESS = 10000
+
+    max_layers, min_layers = config['data_params']['horizontal_dim'], 0
+    max_bottleneck, min_bottleneck = config['data_params']['horizontal_dim'], 0
+
+    normalized_layers = experiment.metrics.normalize(len(model.encoding_layers), min_layers, max_layers)
+    normalized_bottleneck = experiment.metrics.normalize(model.bottleneck_size, min_bottleneck, max_bottleneck)
+
+    complexity = (normalized_layers * C_LAYERS) + (normalized_bottleneck * C_BOTTLENECK)
+    error = error_x - error_y
+
+    fitness = C_MAX_FITNESS - error - complexity
+    return fitness, error, complexity
+
+
+def upload_save_model(alg_name, iteration, solution, error, model, experiment, fitness, complexity, path):
+    conn.post_entries(model, fitness, solution, error, complexity, alg_name, iteration,
+                      experiment.metrics.MSE,
+                      experiment.metrics.RMSE,
+                      experiment.metrics.MAE,
+                      experiment.metrics.ABS_REL,
+                      experiment.metrics.LOG10,
+                      experiment.metrics.DELTA1,
+                      experiment.metrics.DELTA2,
+                      experiment.metrics.DELTA3,
+                      experiment.metrics.CADL)
+    torch.save(model.state_dict(), path + f"/model.pt")
 
 
 class CONVAEArchitecture(ExtendedProblem):
@@ -47,7 +82,8 @@ class CONVAEArchitecture(ExtendedProblem):
             if len(model.encoding_layers) == 0 or len(model.decoding_layers) == 0:
                 fitness = int(9e10)
                 complexity = int(9e10)
-                conn.post_entries(model, fitness, solution, complexity, alg_name, self.iteration,)
+                error = int(9e10)
+                conn.post_entries(model, fitness, solution, error, complexity, alg_name, self.iteration, )
             else:
                 experiment = DNNAEExperiment(model, config['exp_params'], config['data_params']['horizontal_dim'])
                 tb_logger = TensorBoardLogger(save_dir=config['logging_params']['save_dir'],
@@ -82,27 +118,11 @@ class CONVAEArchitecture(ExtendedProblem):
                 Log.info(f'\nTraining end: {datetime.now().strftime("%H:%M:%S-%d/%m/%Y")}')
                 trainer.test(experiment, datamodule=datamodule)
 
-                metrics = experiment.get_metrics()
-                error_x = metrics.MSE + metrics.RMSE + metrics.MAE + metrics.ABS_REL + metrics.LOG10
-                error_y = metrics.DELTA1 + metrics.DELTA2 + metrics.DELTA3
-                complexity = (len(model.encoding_layers) * 100) + (model.bottleneck_size * 10)
-                C_MAX_FITNESS = 10000
-
-                fitness = C_MAX_FITNESS - (0.40 * error_x) - (0.40 * error_y) - (0.20 * complexity)
+                fitness, error, complexity = calculate_fitness(model, experiment)
 
                 Log.debug(tabulate([[complexity, fitness]], headers=["Complexity", "Fitness"],
                                    tablefmt="pretty"))
-                conn.post_entries(model, fitness, solution, complexity, alg_name, self.iteration,
-                                  metrics.MSE,
-                                  metrics.RMSE,
-                                  metrics.MAE,
-                                  metrics.ABS_REL,
-                                  metrics.LOG10,
-                                  metrics.DELTA1,
-                                  metrics.DELTA2,
-                                  metrics.DELTA3,
-                                  metrics.CADL)
-                torch.save(model.state_dict(), path + f"/model.pt")
+                upload_save_model(alg_name, self.iteration, solution, error, model, experiment, fitness, complexity, path)
 
             # TODO Fix when NaN
             if np.isnan(fitness):

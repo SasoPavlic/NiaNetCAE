@@ -1,26 +1,80 @@
 import math
-from math import exp
-from typing import Any
 
 import torch
-import torch.nn.functional as F
 import torchmetrics
-from torch import tensor, Tensor, nn
-from torch.autograd import Variable
+from torch import tensor, Tensor
 
 
-class Metrics:
-    def __init__(self, MSE, RMSE, MAE, ABS_REL, LOG10, DELTA1, DELTA2, DELTA3, CADL):
-        self.MSE = self.fix_number(MSE)
-        self.RMSE = self.fix_number(RMSE)
-        self.MAE = self.fix_number(MAE)
-        self.ABS_REL = self.fix_number(ABS_REL)
-        self.LOG10 = self.fix_number(LOG10)
-        self.DELTA1 = self.fix_number(DELTA1)
-        self.DELTA2 = self.fix_number(DELTA2)
-        self.DELTA3 = self.fix_number(DELTA3)
-        self.CADL = self.fix_number(CADL)
+class EvaluationMetrics:
+    def __init__(self):
+        self.ABS_REL_metric = AbsoluteRelativeDifference()  # Low is better
+        self.CADL_metric = ConvAutoencoderDepthLoss()  # Low is better
+        self.DELTA1_metric = Delta1()  # High is better
+        self.DELTA2_metric = Delta2()  # High is better
+        self.DELTA3_metric = Delta3()  # High is better
+        self.LOG10_metric = Log10AbsoluteRelativeDifference()  # Low is better
+        self.MAE_metric = torchmetrics.MeanAbsoluteError()  # Low is better
+        self.MSE_metric = torchmetrics.MeanSquaredError()  # Low is better
+        self.RMSE_metric = torchmetrics.MeanSquaredError()  # Low is better
 
+        self.ABS_REL = self.ABS_REL_metric.compute()
+        self.CADL = self.CADL_metric.compute()
+        self.DELTA1 = self.DELTA1_metric.compute()
+        self.DELTA2 = self.DELTA2_metric.compute()
+        self.DELTA3 = self.DELTA3_metric.compute()
+        self.LOG10 = self.LOG10_metric.compute()
+        self.MAE = self.MAE_metric.compute()
+        self.MSE = self.MSE_metric.compute()
+        self.RMSE = torch.sqrt(self.RMSE_metric.compute())
+
+    def to(self, device):
+        self.ABS_REL_metric.to(device)
+        self.CADL_metric.to(device)
+        self.DELTA1_metric.to(device)
+        self.DELTA2_metric.to(device)
+        self.DELTA3_metric.to(device)
+        self.LOG10_metric.to(device)
+        self.MAE_metric.to(device)
+        self.MSE_metric.to(device)
+        self.RMSE_metric.to(device)
+
+    def update(self, predictions, targets):
+        self.ABS_REL_metric.update(predictions, targets)
+        self.DELTA1_metric.update(predictions, targets)
+        self.DELTA2_metric.update(predictions, targets)
+        self.DELTA3_metric.update(predictions, targets)
+        self.LOG10_metric.update(predictions, targets)
+        self.MAE_metric.update(predictions, targets)
+        self.MSE_metric.update(predictions, targets)
+        self.RMSE_metric.update(predictions, targets)
+
+    def update_CADL(self, batch_loss):
+        self.CADL_metric.update(batch_loss)
+
+    def compute(self):
+        self.ABS_REL = self.ABS_REL_metric.compute().item()
+        self.CADL = self.CADL_metric.compute().item()
+        self.DELTA1 = self.DELTA1_metric.compute().item()
+        self.DELTA2 = self.DELTA2_metric.compute().item()
+        self.DELTA3 = self.DELTA3_metric.compute().item()
+        self.LOG10 = self.LOG10_metric.compute().item()
+        self.MAE = self.MAE_metric.compute().item()
+        self.MSE = self.MSE_metric.compute().item()
+        self.RMSE = torch.sqrt(self.RMSE_metric.compute()).item()
+
+        return {
+            'ABS_REL': self.ABS_REL,
+            'CADL': self.CADL,
+            'DELTA1': self.DELTA1,
+            'DELTA2': self.DELTA2,
+            'DELTA3': self.DELTA3,
+            'LOG10': self.LOG10,
+            'MAE': self.MAE,
+            'MSE': self.MSE,
+            'RMSE': self.RMSE
+        }
+
+    # TODO Check if this is still needed
     def fix_number(self, num):
         if math.isnan(num):
             return 0  # Replace NaN with 0
@@ -32,38 +86,21 @@ class Metrics:
         else:
             return num  # Return the number if it is neither NaN nor infinite
 
-
-class RMSELoss(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.mse = nn.MSELoss()
-
-    def forward(self, yhat, y):
-        return torch.sqrt(self.mse(yhat, y))
-
-
-class RootMeanAbsoluteError(torchmetrics.Metric):
-    # https: // www.pytorchlightning.ai / blog / torchmetrics - pytorch - metrics - built - to - scale
-    def __init__(self, **kwargs: Any, ) -> None:
-        super().__init__(**kwargs)
-
-        self.add_state("sum_squared_error", default=tensor(0.0), dist_reduce_fx="sum")
-        self.add_state("n_observations", default=tensor(0), dist_reduce_fx="sum")
-
-    def update(self, preds: Tensor, target: Tensor) -> None:  # type: ignore
-        """Update state with predictions and targets.
+    def normalize(self, value, min_value, max_value):
+        """
+        Normalize a value to a range between 0 and 1 using min-max normalization.
 
         Args:
-            preds: Predictions from model
-            target: Ground truth values
+            value (float): The value to be normalized.
+            min_value (float): The minimum value observed for the variable.
+            max_value (float): The maximum value observed for the variable.
+
+        Returns:
+            float: The normalized value between 0 and 1.
         """
-
-        self.sum_squared_error += torch.sum((preds - target) ** 2)
-        self.n_observations += preds.numel()
-
-    def compute(self) -> Tensor:
-        """Computes mean squared error over state."""
-        return torch.sqrt(self.sum_squared_error / self.n_observations)
+        range_value = max_value - min_value
+        normalized_value = (value - min_value) / range_value
+        return normalized_value
 
 
 class AbsoluteRelativeDifference(torchmetrics.Metric):
@@ -96,8 +133,6 @@ class AbsoluteRelativeDifference(torchmetrics.Metric):
         return relative_difference.mean()
 
 
-
-
 class ConvAutoencoderDepthLoss(torchmetrics.Metric):
     # https: // www.pytorchlightning.ai / blog / torchmetrics - pytorch - metrics - built - to - scale
     def __init__(self):
@@ -118,7 +153,7 @@ class ConvAutoencoderDepthLoss(torchmetrics.Metric):
         return self.sum_error
 
 
-class Log10Metric(torchmetrics.Metric):
+class Log10AbsoluteRelativeDifference(torchmetrics.Metric):
     def __init__(self):
         super().__init__()
         self.add_state("num_examples", default=torch.tensor(0), dist_reduce_fx="sum")
@@ -225,86 +260,3 @@ class Delta3(torchmetrics.Metric):
 
     def compute(self):
         return self.correct_count.float() / self.total_count
-
-
-# TODO Remove bellow once is tested
-
-def lg10(x):
-    return torch.div(torch.log(x), math.log(10))
-
-
-def maxOfTwo(x, y):
-    z = x.clone()
-    maskYLarger = torch.lt(x, y)
-    z[maskYLarger.detach()] = y[maskYLarger.detach()]
-    return z
-
-
-def nValid(x):
-    return torch.sum(torch.eq(x, x).float())
-
-
-def nNanElement(x):
-    return torch.sum(torch.ne(x, x).float())
-
-
-def getNanMask(x):
-    return torch.ne(x, x)
-
-
-def setNanToZero(input, target):
-    target = target.movedim(2, -1)
-    nanMask = getNanMask(target)
-    nValidElement = nValid(target)
-
-    _input = input.clone()
-    _target = target.clone()
-
-    _input[nanMask] = 0
-    _target[nanMask] = 0
-
-    return _input, _target, nanMask, nValidElement
-
-
-def evaluateError(output, target):
-    errors = {'MSE': 0, 'RMSE': 0, 'ABS_REL': 0, 'LG10': 0,
-              'MAE': 0, 'DELTA1': 0, 'DELTA2': 0, 'DELTA3': 0}
-
-    _output, _target, nanMask, nValidElement = setNanToZero(output, target)
-
-    if (nValidElement.data.cpu().numpy() > 0):
-        diffMatrix = torch.abs(_output - _target)
-
-        errors['MSE'] = torch.sum(torch.pow(diffMatrix, 2)) / nValidElement
-
-        errors['MAE'] = torch.sum(diffMatrix) / nValidElement
-
-        realMatrix = torch.div(diffMatrix, _target)
-        realMatrix[nanMask] = 0
-        errors['ABS_REL'] = torch.sum(realMatrix) / nValidElement
-
-        LG10Matrix = torch.abs(lg10(_output) - lg10(_target))
-        LG10Matrix[nanMask] = 0
-        errors['LG10'] = torch.sum(LG10Matrix) / nValidElement
-
-        yOverZ = torch.div(_output, _target)
-        zOverY = torch.div(_target, _output)
-
-        maxRatio = maxOfTwo(yOverZ, zOverY)
-
-        errors['DELTA1'] = torch.sum(
-            torch.le(maxRatio, 1.25).float()) / nValidElement
-        errors['DELTA2'] = torch.sum(
-            torch.le(maxRatio, math.pow(1.25, 2)).float()) / nValidElement
-        errors['DELTA3'] = torch.sum(
-            torch.le(maxRatio, math.pow(1.25, 3)).float()) / nValidElement
-
-        errors['MSE'] = float(errors['MSE'].data.cpu().numpy())
-        errors['ABS_REL'] = float(errors['ABS_REL'].data.cpu().numpy())
-        errors['LG10'] = float(errors['LG10'].data.cpu().numpy())
-        errors['MAE'] = float(errors['MAE'].data.cpu().numpy())
-        errors['DELTA1'] = float(errors['DELTA1'].data.cpu().numpy())
-        errors['DELTA2'] = float(errors['DELTA2'].data.cpu().numpy())
-        errors['DELTA3'] = float(errors['DELTA3'].data.cpu().numpy())
-
-    return errors

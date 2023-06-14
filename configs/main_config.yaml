@@ -12,7 +12,7 @@ model_params:
 
 data_params:
   data_path: "/data/"
-  data_percentage: 1
+  data_percentage: 100
   channel_dim: 3
   horizontal_dim: 304
   vertical_dim: 304
@@ -25,7 +25,7 @@ data_params:
 
 trainer_params:
   min_epochs: 1
-  max_epochs: 1 #20
+  max_epochs: 20 #20
 
 fine_tune_lr_finder:
   tune_n_epochs: 5
