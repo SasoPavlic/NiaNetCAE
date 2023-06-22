@@ -21,7 +21,7 @@ class ConvAutoencoder(BaseAutoencoder, nn.Module):
         super(ConvAutoencoder, self).__init__()
 
         y1, y2, y3, y4 = solution
-        #y1, y2, y3, y4 = [0.6174444276058675, 0.8886299378813213, 0.6035791847318245, 0.5915832411180554]
+        #y1, y2, y3, y4 = [0.815557478945594, 0.6393543002741727, 0.34880830602758817, 0.07916074431862574]
 
         self.id = str(int(time.time())).strip()
         self.batch_size = kwargs['data_params']['batch_size']
@@ -130,6 +130,7 @@ class ConvAutoencoder(BaseAutoencoder, nn.Module):
                                         str(self.bottleneck_size) +
                                         str(self.encoding_layers) +
                                         str(self.decoding_layers)).encode('utf-8')).hexdigest()
+        Log.info(f"Hash ID: {self.hash_id}")
 
     def encode(self, x: Tensor) -> List[Tensor]:
         """

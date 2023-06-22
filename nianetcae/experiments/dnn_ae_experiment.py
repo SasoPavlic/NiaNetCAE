@@ -129,6 +129,8 @@ class DNNAEExperiment(LightningModule):
                 batch = next(dataloader_iterator)
                 batch['image'] = batch['image'].to(self.curr_device)
                 batch['depth'] = batch['depth'].to(self.curr_device)
+                # Log path of the image
+                Log.debug(f"Image path: {batch['path']}")
             except StopIteration:
                 break
             finally:
