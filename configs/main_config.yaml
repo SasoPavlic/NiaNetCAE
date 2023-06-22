@@ -12,26 +12,26 @@ model_params:
 
 data_params:
   data_path: "/data/"
-  data_percentage: 100
+  data_percentage: 1
   channel_dim: 3
   horizontal_dim: 304
   vertical_dim: 304
   train_size: 90 #Shared dataset
   test_size: 100 #Own dataset
   val_size: 10 #Shared dataset
-  batch_size: 32
+  batch_size: 4
   num_workers: 0
   pin_memory: True
 
 trainer_params:
   min_epochs: 1
-  max_epochs: 20 #20
+  max_epochs: 2 #20
 
 fine_tune_lr_finder:
   tune_n_epochs: 5
   lr_finder:
     mode: "exponential" #"linear"
-    num_training_steps: 100
+    num_training_steps: 3
     attr_name: "learning_rate"
     update_attr: True
     early_stop_threshold: # None # https://github.com/Lightning-AI/lightning/issues/4846#issuecomment-1014148839

@@ -30,13 +30,13 @@ def calculate_fitness(model, experiment):
     max_layers, min_layers = config['data_params']['horizontal_dim'], 0
     max_bottleneck, min_bottleneck = config['data_params']['horizontal_dim'], 0
 
-    normalized_layers = experiment.metrics.normalize(len(model.encoding_layers), min_layers, max_layers)
+    normalized_num_layers = experiment.metrics.normalize(len(model.encoding_layers), min_layers, max_layers)
     normalized_bottleneck = experiment.metrics.normalize(model.bottleneck_size, min_bottleneck, max_bottleneck)
 
-    complexity = (normalized_layers * C_LAYERS) + (normalized_bottleneck * C_BOTTLENECK)
+    complexity = (normalized_num_layers * C_LAYERS) + (normalized_bottleneck * C_BOTTLENECK)
     error = error_x - error_y
 
-    fitness = C_MAX_FITNESS - error - complexity
+    fitness = error + complexity
     return fitness, error, complexity
 
 

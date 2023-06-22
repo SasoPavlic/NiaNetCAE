@@ -17,16 +17,6 @@ class EvaluationMetrics:
         self.MSE_metric = torchmetrics.MeanSquaredError()  # Low is better
         self.RMSE_metric = torchmetrics.MeanSquaredError()  # Low is better
 
-        self.ABS_REL = self.ABS_REL_metric.compute()
-        self.CADL = self.CADL_metric.compute()
-        self.DELTA1 = self.DELTA1_metric.compute()
-        self.DELTA2 = self.DELTA2_metric.compute()
-        self.DELTA3 = self.DELTA3_metric.compute()
-        self.LOG10 = self.LOG10_metric.compute()
-        self.MAE = self.MAE_metric.compute()
-        self.MSE = self.MSE_metric.compute()
-        self.RMSE = torch.sqrt(self.RMSE_metric.compute())
-
     def to(self, device):
         self.ABS_REL_metric.to(device)
         self.CADL_metric.to(device)
@@ -109,19 +99,19 @@ class AbsoluteRelativeDifference(torchmetrics.Metric):
         self.add_state("absolute_difference", default=torch.tensor(0.0), dist_reduce_fx="sum")
         self.add_state("denominator", default=torch.tensor(0.0), dist_reduce_fx="sum")
 
-    def update(self, tensor1, tensor2):
-        absolute_difference = torch.abs(tensor1 - tensor2)
-        denominator = torch.abs(tensor1)
+    def update(self, predictions, targets):
+        absolute_difference = torch.abs(predictions - targets)
+        denominator = torch.abs(predictions)
 
-        # Handle zero values
-        zero_mask = (tensor1 == 0) & (tensor2 == 0)
-        absolute_difference[zero_mask] = 0.0
-        denominator[zero_mask] = 1.0  # Avoid division by zero
-
-        # Handle negative values
-        negative_mask = (tensor1 < 0) | (tensor2 < 0)
-        absolute_difference[negative_mask] = 0.0
-        denominator[negative_mask] = 1.0  # Avoid division by zero
+        # # Handle zero values
+        # zero_mask = (tensor1 == 0) & (tensor2 == 0)
+        # absolute_difference[zero_mask] = 0.0
+        # denominator[zero_mask] = 1.0  # Avoid division by zero
+        #
+        # # Handle negative values
+        # negative_mask = (tensor1 < 0) | (tensor2 < 0)
+        # absolute_difference[negative_mask] = 0.0
+        # denominator[negative_mask] = 1.0  # Avoid division by zero
 
         self.absolute_difference += torch.sum(absolute_difference)
         self.denominator += torch.sum(denominator)
@@ -131,6 +121,51 @@ class AbsoluteRelativeDifference(torchmetrics.Metric):
         non_zero_mask = self.denominator != 0
         relative_difference[non_zero_mask] = self.absolute_difference[non_zero_mask] / self.denominator[non_zero_mask]
         return relative_difference.mean()
+
+
+class Log10AbsoluteRelativeDifference(torchmetrics.Metric):
+
+    def __init__(self, dist_sync_on_step=False):
+        super().__init__(dist_sync_on_step=dist_sync_on_step)
+        self.add_state("num_examples", default=torch.tensor(0), dist_reduce_fx="sum")
+        self.add_state("sum_log10_diff", default=torch.tensor(0.0), dist_reduce_fx="sum")
+
+    def update(self, predictions, targets):
+        eps = torch.finfo(torch.float32).eps
+
+        log10_predictions = torch.abs(predictions)
+        log10_predictions = torch.log10(log10_predictions + eps)
+        log10_targets = torch.log10(targets + eps)
+
+        # # Handle zero values
+        # zero_mask = (predictions == 0) & (targets == 0)
+        # nonzero_mask = ~zero_mask
+        # log10_predictions[zero_mask] = float('-inf')
+        # log10_targets[zero_mask] = float('-inf')
+        #
+        # # Handle negative values
+        # negative_mask = (predictions < 0) | (targets < 0)
+        # positive_mask = ~negative_mask
+        # log10_predictions[negative_mask] = float('-inf')
+        # log10_targets[negative_mask] = float('-inf')
+        #
+        # # Handle infinity values
+        # infinity_mask = (~torch.isfinite(log10_predictions)) | (~torch.isfinite(log10_targets))
+        # log10_predictions[infinity_mask] = float('-inf')
+        # log10_targets[infinity_mask] = float('-inf')
+
+        absolute_difference = torch.abs(log10_predictions - log10_targets)
+        relative_difference = absolute_difference / (torch.abs(log10_targets) + 1e-8)
+        relative_difference[torch.isnan(relative_difference)] = 0.0
+
+        self.sum_log10_diff += torch.sum(relative_difference)
+        self.num_examples += predictions.numel()
+
+    def compute(self):
+        if self.num_examples == 0:
+            return float('nan')
+
+        return self.sum_log10_diff / self.num_examples
 
 
 class ConvAutoencoderDepthLoss(torchmetrics.Metric):
@@ -151,46 +186,6 @@ class ConvAutoencoderDepthLoss(torchmetrics.Metric):
     def compute(self) -> Tensor:
         """Computes mean squared error over state."""
         return self.sum_error
-
-
-class Log10AbsoluteRelativeDifference(torchmetrics.Metric):
-    def __init__(self):
-        super().__init__()
-        self.add_state("num_examples", default=torch.tensor(0), dist_reduce_fx="sum")
-        self.add_state("sum_log10_diff", default=torch.tensor(0.0), dist_reduce_fx="sum")
-
-    def update(self, predictions, targets):
-        log10_predictions = torch.log10(predictions)
-        log10_targets = torch.log10(targets)
-
-        # Handle edge cases where logarithm is undefined
-        log10_predictions[torch.isnan(log10_predictions)] = 0.0
-        log10_targets[torch.isnan(log10_targets)] = 0.0
-
-        # Handle zero predictions and zero targets
-        zero_mask = (predictions == 0) & (targets == 0)
-        log10_predictions[zero_mask] = 0.0
-        log10_targets[zero_mask] = 0.0
-
-        # Handle negative predictions or targets
-        negative_mask = (predictions < 0) | (targets < 0)
-        log10_predictions[negative_mask] = 0.0
-        log10_targets[negative_mask] = 0.0
-
-        absolute_difference = torch.abs(log10_predictions - log10_targets)
-
-        # Handle infinite predictions or targets
-        infinite_mask = (~torch.isfinite(log10_predictions)) | (~torch.isfinite(log10_targets))
-        absolute_difference[infinite_mask] = 0.0
-
-        relative_difference = absolute_difference / (torch.abs(log10_targets) + 1e-8)
-        relative_difference[torch.isnan(relative_difference)] = 0.0
-
-        self.sum_log10_diff += torch.sum(relative_difference)
-        self.num_examples += predictions.numel()
-
-    def compute(self):
-        return self.sum_log10_diff / self.num_examples
 
 
 class Delta1(torchmetrics.Metric):

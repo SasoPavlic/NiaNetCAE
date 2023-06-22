@@ -51,7 +51,11 @@ class DatasetLoader(Dataset):
     def __getitem__(self, index: int) -> dict:
         image = Image.open(self.paths['image'][index])
         depth = Image.open(self.paths['depth'][index])
-        sample = {'image': image, 'depth': depth}
+        path = self.paths['depth'][index]
+        sample = {'image': image,
+                  'depth': depth,
+                  'path': path
+                  }
 
         if self.transform:
             sample = self.transform(sample)

@@ -42,7 +42,7 @@ class RandomRotate(object):
         self.order = order
 
     def __call__(self, sample):
-        image, depth = sample['image'], sample['depth']
+        image, depth, path = sample['image'], sample['depth'], sample['path']
 
         applied_angle = random.uniform(-self.angle, self.angle)
         angle1 = applied_angle
@@ -56,13 +56,13 @@ class RandomRotate(object):
         image = Image.fromarray(image)
         depth = Image.fromarray(depth)
 
-        return {'image': image, 'depth': depth}
+        return {'image': image, 'depth': depth, 'path': path}
 
 
 class RandomHorizontalFlip(object):
 
     def __call__(self, sample):
-        image, depth = sample['image'], sample['depth']
+        image, depth, path = sample['image'], sample['depth'], sample['path']
 
         if not _is_pil_image(image):
             raise TypeError(
@@ -75,7 +75,7 @@ class RandomHorizontalFlip(object):
             image = image.transpose(Image.FLIP_LEFT_RIGHT)
             depth = depth.transpose(Image.FLIP_LEFT_RIGHT)
 
-        return {'image': image, 'depth': depth}
+        return {'image': image, 'depth': depth, 'path': path}
 
 
 class Scale(object):
@@ -91,12 +91,12 @@ class Scale(object):
         self.size = size
 
     def __call__(self, sample):
-        image, depth = sample['image'], sample['depth']
+        image, depth, path = sample['image'], sample['depth'], sample['path']
 
         image = self.changeScale(image, self.size)
         depth = self.changeScale(depth, self.size, Image.NEAREST)
 
-        return {'image': image, 'depth': depth}
+        return {'image': image, 'depth': depth, 'path': path}
 
     def changeScale(self, img, size, interpolation=Image.BILINEAR):
 
@@ -128,7 +128,7 @@ class CenterCrop(object):
         self.size_depth = size_depth
 
     def __call__(self, sample):
-        image, depth = sample['image'], sample['depth']
+        image, depth, path = sample['image'], sample['depth'], sample['path']
 
         image = self.centerCrop(image, self.size_image)
         depth = self.centerCrop(depth, self.size_image)
@@ -136,7 +136,7 @@ class CenterCrop(object):
         ow, oh = self.size_depth
         depth = depth.resize((ow, oh))
 
-        return {'image': image, 'depth': depth}
+        return {'image': image, 'depth': depth, 'path': path}
 
     def centerCrop(self, image, size):
         w1, h1 = image.size
@@ -164,7 +164,7 @@ class ToTensor(object):
         self.is_test = is_test
 
     def __call__(self, sample):
-        image, depth = sample['image'], sample['depth']
+        image, depth, path = sample['image'], sample['depth'], sample['path']
         """
         Args:
             pic (PIL.Image or numpy.ndarray): Image to be converted to tensor.
@@ -177,7 +177,7 @@ class ToTensor(object):
             depth = self.to_tensor(depth).float() / 1000
         else:
             depth = self.to_tensor(depth).float() * 10
-        return {'image': image, 'depth': depth}
+        return {'image': image, 'depth': depth, 'path': path}
 
     def to_tensor(self, pic):
         if not (_is_pil_image(pic) or _is_numpy_image(pic)):
@@ -228,7 +228,7 @@ class Lighting(object):
         self.eigvec = eigvec
 
     def __call__(self, sample):
-        image, depth = sample['image'], sample['depth']
+        image, depth, path = sample['image'], sample['depth'], sample['path']
         if self.alphastd == 0:
             return image
 
@@ -240,7 +240,7 @@ class Lighting(object):
 
         image = image.add(rgb.view(3, 1, 1).expand_as(image))
 
-        return {'image': image, 'depth': depth}
+        return {'image': image, 'depth': depth, 'path': path}
 
 
 class Grayscale(object):
@@ -296,7 +296,7 @@ class RandomOrder(object):
         self.transforms = transforms
 
     def __call__(self, sample):
-        image, depth = sample['image'], sample['depth']
+        image, depth, path = sample['image'], sample['depth'], sample['path']
 
         if self.transforms is None:
             return {'image': image, 'depth': depth}
@@ -304,7 +304,7 @@ class RandomOrder(object):
         for i in order:
             image = self.transforms[i](image)
 
-        return {'image': image, 'depth': depth}
+        return {'image': image, 'depth': depth, 'path': path}
 
 
 class ColorJitter(RandomOrder):
@@ -331,11 +331,11 @@ class Normalize(object):
         Returns:
             Tensor: Normalized image.
         """
-        image, depth = sample['image'], sample['depth']
+        image, depth, path = sample['image'], sample['depth'], sample['path']
 
         image = self.normalize(image, self.mean, self.std)
 
-        return {'image': image, 'depth': depth}
+        return {'image': image, 'depth': depth, 'path': path}
 
     def normalize(self, tensor, mean, std):
         """Normalize a tensor image with mean and standard deviation.
