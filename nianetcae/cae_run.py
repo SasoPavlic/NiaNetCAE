@@ -25,7 +25,6 @@ def calculate_fitness(model, experiment):
 
     C_LAYERS = 10000
     C_BOTTLENECK = 1000
-    C_MAX_FITNESS = 10000
 
     max_layers, min_layers = config['data_params']['horizontal_dim'], 0
     max_bottleneck, min_bottleneck = config['data_params']['horizontal_dim'], 0
@@ -69,6 +68,7 @@ class CONVAEArchitecture(ExtendedProblem):
         model = ConvAutoencoder(solution, **config)
         existing_entry = conn.get_entries(hash_id=model.hash_id)
         path = config['logging_params']['save_dir'] + str(self.iteration) + "_" + alg_name + "_" + model.hash_id
+        config['logging_params']['model_path'] = path
         Path(path).mkdir(parents=True, exist_ok=True)
 
         if existing_entry.shape[0] > 0:
@@ -85,7 +85,7 @@ class CONVAEArchitecture(ExtendedProblem):
                 error = int(9e10)
                 conn.post_entries(model, fitness, solution, error, complexity, alg_name, self.iteration, )
             else:
-                experiment = DNNAEExperiment(model, config['exp_params'], config['data_params']['horizontal_dim'])
+                experiment = DNNAEExperiment(model, **config)
                 tb_logger = TensorBoardLogger(save_dir=config['logging_params']['save_dir'],
                                               name=str(self.iteration) + "_" + alg_name + "_" + model.hash_id)
 
@@ -124,7 +124,6 @@ class CONVAEArchitecture(ExtendedProblem):
                                    tablefmt="pretty"))
                 upload_save_model(alg_name, self.iteration, solution, error, model, experiment, fitness, complexity, path)
 
-            # TODO Fix when NaN
             if np.isnan(fitness):
                 fitness = int(9e10)
             return fitness

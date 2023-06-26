@@ -6,6 +6,7 @@ from torch import Tensor
 from log import Log
 from nianetcae.experiments.evaluationmetrics import EvaluationMetrics
 from nianetcae.models.conv_ae import ConvAutoencoder
+from nianetcae.visualize.batch_to_image import visualise_batch
 
 
 class FineTuneLearningRateFinder(LearningRateFinder):
@@ -35,7 +36,7 @@ class FineTuneLearningRateFinder(LearningRateFinder):
 
 
 class DNNAEExperiment(LightningModule):
-    def __init__(self, conv_autoencoder: ConvAutoencoder, params: dict, tensor_dim: int) -> None:
+    def __init__(self, conv_autoencoder: ConvAutoencoder, **kwargs) -> None:
         super(DNNAEExperiment, self).__init__()
 
         # https://github.com/Lightning-AI/lightning/issues/4390#issuecomment-717447779
@@ -43,9 +44,10 @@ class DNNAEExperiment(LightningModule):
 
         self.results = None
         self.model = conv_autoencoder
+        self.model_path = kwargs['logging_params']['model_path']
         self.learning_rate = 0.0
-        self.params = params
-        self.tensor_dim = tensor_dim
+        self.params = kwargs['exp_params']
+        self.tensor_dim = kwargs['data_params']['horizontal_dim']
         self.curr_device = None
         self.hold_graph = False
         self.train_loss = None
@@ -130,7 +132,7 @@ class DNNAEExperiment(LightningModule):
                 batch['image'] = batch['image'].to(self.curr_device)
                 batch['depth'] = batch['depth'].to(self.curr_device)
                 # Log path of the image
-                Log.debug(f"Image path: {batch['path']}")
+                # Log.debug(f"Image path: {batch['path']}")
             except StopIteration:
                 break
             finally:
@@ -145,7 +147,7 @@ class DNNAEExperiment(LightningModule):
 
                 self.metrics.update(results['output'], results['depth'])
                 self.metrics.update_CADL(test_loss['loss'])
-                # visualise_batch(**results)
+                visualise_batch(self.model_path, batch_idx,**results)
 
         self.results = self.metrics.compute()
 
