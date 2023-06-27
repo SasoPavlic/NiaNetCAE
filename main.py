@@ -1,17 +1,14 @@
 import argparse
 import uuid
 from datetime import datetime
-from os import path
 from pathlib import Path
-import logging.config
-from log import Log
 
 import torch
 import yaml
 from lightning.pytorch import seed_everything
-from lightning.pytorch.callbacks import EarlyStopping
 
 import nianetcae
+from log import Log
 from nianetcae.cae_run import solve_architecture_problem
 from nianetcae.dataloaders.nyu_dataloader import NYUDataset
 from nianetcae.storage.database import SQLiteConnector

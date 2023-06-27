@@ -122,7 +122,8 @@ class CONVAEArchitecture(ExtendedProblem):
 
                 Log.debug(tabulate([[complexity, fitness]], headers=["Complexity", "Fitness"],
                                    tablefmt="pretty"))
-                upload_save_model(alg_name, self.iteration, solution, error, model, experiment, fitness, complexity, path)
+                upload_save_model(alg_name, self.iteration, solution, error, model, experiment, fitness, complexity,
+                                  path)
 
             if np.isnan(fitness):
                 fitness = int(9e10)

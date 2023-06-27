@@ -11,5 +11,4 @@
 #SBATCH --gres=gpu:1
 #SBATCH --time=72:00:00
 
-#singularity exec -e --pwd /app -B /ceph/grid/home/sasop/Result-long:/app/Result,/ceph/grid/home/sasop/checkpoint-long:/app/checkpoint --nv docker://spartan300/urv-model:1 python ./train.py
 singularity exec -e --pwd /app -B $(pwd)/logs:/app/logs,$(pwd)/data:/app/data,$(pwd)/configs:/app/configs --nv docker://spartan300/nianet:cae python main.py
