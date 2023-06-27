@@ -1,13 +1,10 @@
-import math
 import os
-from typing import List, Optional, Union
+from typing import Optional
+
 import pandas as pd
-
 from lightning.pytorch import LightningDataModule
-
-from torch.utils.data import Dataset
 from lightning.pytorch.utilities.data import DataLoader
-
+from torch.utils.data import Dataset
 from torchvision import transforms
 
 from log import Log
@@ -27,7 +24,6 @@ class DatasetLoader(Dataset):
         all_data_samples, batched_data_samples = len(self.paths), len(self.paths)
         all_data_samples = int(all_data_samples * (data_size / 100))
         all_data_samples = int(all_data_samples * (data_percentage / 100))
-
 
         # if all_data_samples % batch_size == 0:
         #     batched_data_samples = all_data_samples

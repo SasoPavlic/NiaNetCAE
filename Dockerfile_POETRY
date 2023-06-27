@@ -48,9 +48,9 @@ COPY nianetcae/cae_run.py /app/nianetcae/cae_run.py
 COPY tests/test_model.py /app/tests/test_model.py
 COPY tests/__init__.py /app/tests/__init__.py
 
-COPY configs /app/configs
 COPY setup.py /app/setup.py
 COPY main.py /app/main.py
+COPY log.py /app/log.py
 
 # Install project dependencies
 RUN poetry config virtualenvs.create false && \

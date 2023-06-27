@@ -1,19 +1,13 @@
 import hashlib
 import time
 
-import torch
 import torch.distributions
-import torch.nn as nn
-import torch.optim as optim
 import torch.utils
 import torchmetrics.image
 
-from log import Log
-from nianetcae.models.mapper import *
-
 from nianetcae.models.base import BaseAutoencoder
+from nianetcae.models.mapper import *
 from nianetcae.models.types_ import *
-from lightning.pytorch import LightningModule
 
 
 class ConvAutoencoder(BaseAutoencoder, nn.Module):
@@ -21,7 +15,7 @@ class ConvAutoencoder(BaseAutoencoder, nn.Module):
         super(ConvAutoencoder, self).__init__()
 
         y1, y2, y3, y4 = solution
-        #y1, y2, y3, y4 = [0.24049856441189332, 0.9753097834889362, 0.9461006290102326, 0.8690151337285376]
+        # y1, y2, y3, y4 = [0.24049856441189332, 0.9753097834889362, 0.9461006290102326, 0.8690151337285376]
 
         self.id = str(int(time.time())).strip()
         self.batch_size = kwargs['data_params']['batch_size']
@@ -78,24 +72,30 @@ class ConvAutoencoder(BaseAutoencoder, nn.Module):
 
             while layers != 0:
                 self.encoding_layers.append(
-                    nn.Conv2d(in_channels=input_shape, out_channels=output_shape, kernel_size=self.kernel_size, stride=self.stride,
+                    nn.Conv2d(in_channels=input_shape, out_channels=output_shape, kernel_size=self.kernel_size,
+                              stride=self.stride,
                               padding=self.padding, dilation=self.dilation))
 
                 if layers == max_layers:
                     self.decoding_layers.insert(0, nn.ConvTranspose2d(in_channels=output_shape,
                                                                       out_channels=1, kernel_size=self.kernel_size,
-                                                                      stride=self.stride, padding=self.padding, output_padding=self.output_padding, dilation=self.dilation))
+                                                                      stride=self.stride, padding=self.padding,
+                                                                      output_padding=self.output_padding,
+                                                                      dilation=self.dilation))
                 else:
                     self.decoding_layers.insert(0, nn.ConvTranspose2d(in_channels=output_shape,
-                                                                      out_channels=input_shape, kernel_size=self.kernel_size,
-                                                                      stride=self.stride, padding=self.padding, output_padding=self.output_padding, dilation=self.dilation))
+                                                                      out_channels=input_shape,
+                                                                      kernel_size=self.kernel_size,
+                                                                      stride=self.stride, padding=self.padding,
+                                                                      output_padding=self.output_padding,
+                                                                      dilation=self.dilation))
 
                 layers = layers - 1
                 input_shape = output_shape
                 output_shape = output_shape + self.layer_step
 
             Log.debug("+++++++++++++++++++++++++++++++++++++++START ARCHITECTURE "
-                  "MODIFICATION+++++++++++++++++++++++++++++++++++++++")
+                      "MODIFICATION+++++++++++++++++++++++++++++++++++++++")
 
             network_prunning(self.encoding_layers, self.decoding_layers, h_w)
 
@@ -115,9 +115,9 @@ class ConvAutoencoder(BaseAutoencoder, nn.Module):
             output_list = calculate_output_shapes(self.encoding_layers, self.decoding_layers, h_w, )
             Log.info(f"Topology (Encoder + Decoder):\n {self.encoding_layers + self.decoding_layers}")
             Log.debug(f"Layer outputs: {output_list}")
-            self.bottleneck_size = int(sum(output_list[len(self.encoding_layers)-1])/2)
+            self.bottleneck_size = int(sum(output_list[len(self.encoding_layers) - 1]) / 2)
             Log.debug("+++++++++++++++++++++++++++++++++++++++END ARCHITECTURE "
-                  "MODIFICATION+++++++++++++++++++++++++++++++++++++++")
+                      "MODIFICATION+++++++++++++++++++++++++++++++++++++++")
         else:
             self.bottleneck_size = 0
 

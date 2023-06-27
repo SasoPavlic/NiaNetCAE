@@ -147,7 +147,7 @@ class DNNAEExperiment(LightningModule):
 
                 self.metrics.update(results['output'], results['depth'])
                 self.metrics.update_CADL(test_loss['loss'])
-                visualise_batch(self.model_path, batch_idx,**results)
+                visualise_batch(self.model_path, batch_idx, **results)
 
         self.results = self.metrics.compute()
 

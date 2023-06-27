@@ -271,7 +271,7 @@ def calculate_convolution(batch_size, channel_dim, h_w):
 # Function which calculates the output shape of a convolutional layer
 # It gets the tensor shape and tries to guess the correct output shape by modifiying kernel size, stride and padding
 def calculate_last_layer(current, final, kernel_size=3, stride=2, padding=1, output_padding=1, dilation=1):
-    #calculate_convolution(32,3, (304,304))
+    # calculate_convolution(32,3, (304,304))
 
     Log.debug(f"Task for: {(current[0], current[1])} --> {(final[0], final[1])}")
 

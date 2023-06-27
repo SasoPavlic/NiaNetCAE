@@ -1,10 +1,10 @@
 # copied from https://github.com/JunjH/Revisiting_Single_Depth_Estimation/blob/master/nyu_transform.py
+import collections
 import warnings
 
-import torch
 import numpy as np
-from PIL import Image, ImageOps
-import collections
+import torch
+from PIL import Image
 
 try:
     import accimage
@@ -13,9 +13,9 @@ except ImportError:
 import random
 import scipy.ndimage as ndimage
 
-import pdb
-
 warnings.filterwarnings('ignore', category=UserWarning, message='TypedStorage is deprecated')
+
+
 def _is_pil_image(img):
     if accimage is not None:
         return isinstance(img, (Image.Image, accimage.Image))

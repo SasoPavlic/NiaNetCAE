@@ -18,8 +18,8 @@ in the library [NiaPy](https://github.com/NiaOrg/NiaPy) to navigate efficiently 
 ### What it can do? 👀
 
 * **Construct novel AE's architecture** using nature-inspired algorithms.
-* * number of solutions = layer step * layers * act. func. * epochs * lr * optimizers
-* * 1.728.000.000 = 60 * 60 * 8 * 100 * 100 * 6
+* * number of solutions = layer step * layers * act. func. * optimizers
+* * 4.435.968 = 304 * 304 * 8  * 6
 * It can be utilized for **any kind of dataset**, which has **3D images** values.
 * Estimate the depth of the image
 
@@ -68,9 +68,7 @@ The following dimensions can be modified:
 * y1: number of neurons per layer,
 * y2: number of layers,
 * y3: activation function
-* y4: number of epochs,
-* y5: learning rate
-* y6: optimizer algorithm.
+* y4: optimizer algorithm.
 
 You can run the NiaNetCAE script once your setup is complete.
 
@@ -104,20 +102,22 @@ docker run \
 ```
 #!/bin/bash
 ## Running code on SLURM cluster
-#SBATCH -J nianet
+#SBATCH -J nianet-cae
 #SBATCH -o nianet-cae-%j.out
 #SBATCH -e nianet-cae-%j.err
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --partition=gpu
-#SBATCH --mem-per-gpu=32GB
+#SBATCH --mem-per-gpu=32GB  # memory per GPU
 #SBATCH --gres=gpu:1
 #SBATCH --time=72:00:00
 
-singularity exec -e --pwd /app -B $(pwd)/logs:/app/logs,$(pwd)/data:/app/data --nv docker://spartan300/nianet:cae python main.py
+singularity exec -e --pwd /app -B $(pwd)/logs:/app/logs,$(pwd)/data:/app/data,$(pwd)/configs:/app/configs --nv docker://spartan300/nianet:cae python main.py
 ```
 1. Make script executable: ```chmod +x run.sh```
-3. Submit your script to a job scheduler: ```SBATCH run.sh```
+2. Make sure that you have the following folders in your current directory: logs, data, configs
+3. Set folder permissions to 777: ```chmod -R 777 logs data configs```
+4. Submit your script to a job scheduler: ```SBATCH run.sh```
 
 ### HELP ⚠️
 

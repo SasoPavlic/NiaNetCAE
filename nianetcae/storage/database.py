@@ -8,6 +8,8 @@ import pandas as pd
 from log import Log
 
 infinity = float(99999999999)
+
+
 class SQLiteConnector():
     def __init__(self, db_file, table_name):
         self.db_file = db_file
