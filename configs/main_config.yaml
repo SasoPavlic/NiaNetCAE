@@ -1,14 +1,12 @@
 nia_search:
-  evaluations: 1000
+  evaluations: 100
   runs: 1
-
-model_params:
-  name: 'ConvAutoencoder'
-  kernel_size: 3
-  stride: 2
-  padding: 1
-  output_padding: 1
-  dilation: 1
+  algorithms:
+    - particle_swarm
+#    - differential_evolution
+#    - firefly
+#    - self_adaptive_differential_evolution
+#    - genetic_algorithm
 
 data_params:
   data_path: "/data/"
@@ -27,24 +25,32 @@ trainer_params:
   min_epochs: 1
   max_epochs: 20 #20
 
+early_stop:
+  monitor: "loss"
+  patience: 5
+  min_delta: 0.0
+  mode: "min"
+
 fine_tune_lr_finder:
   tune_n_epochs: 5
   lr_finder:
     mode: "exponential" #"linear"
-    num_training_steps: 1
+    num_training_steps: 100
     attr_name: "learning_rate"
     update_attr: True
     early_stop_threshold: # None # https://github.com/Lightning-AI/lightning/issues/4846#issuecomment-1014148839
 
+model_params:
+  name: 'ConvAutoencoder'
+  kernel_size: 3
+  stride: 2
+  padding: 1
+  output_padding: 1
+  dilation: 1
+
 exp_params:
   weight_decay: 0.0
   manual_seed: 1265
-
-early_stop:
-  monitor: "loss"
-  patience: 3
-  min_delta: 0.0
-  mode: "min"
 
 logging_params:
   name: "ConvAutoencoder"

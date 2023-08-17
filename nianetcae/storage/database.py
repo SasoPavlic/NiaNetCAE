@@ -31,6 +31,17 @@ class SQLiteConnector():
 
         return existing_entry
 
+    def get_maximum_fitness(self):
+        try:
+            self.create_connection()
+            maximum_results = pd.read_sql(f"select max(fitness) from {self.table_name}", self.connection)
+            self.connection.close()
+        except Exception as e:
+            Log.error(e)
+
+        max_fitness = maximum_results['fitness'][0]
+        return max_fitness
+
     def best_results(self):
         try:
             self.create_connection()

@@ -17,6 +17,16 @@ class EvaluationMetrics:
         self.MSE_metric = torchmetrics.MeanSquaredError()  # Low is better
         self.RMSE_metric = torchmetrics.MeanSquaredError()  # Low is better
 
+        self.ABS_REL = None
+        self.CADL = None
+        self.DELTA1 = None
+        self.DELTA2 = None
+        self.DELTA3 = None
+        self.LOG10 = None
+        self.MAE = None
+        self.MSE = None
+        self.RMSE = None
+
     def to(self, device):
         self.ABS_REL_metric.to(device)
         self.CADL_metric.to(device)
@@ -64,17 +74,10 @@ class EvaluationMetrics:
             'RMSE': self.RMSE
         }
 
-    # TODO Check if this is still needed
-    def fix_number(self, num):
-        if math.isnan(num):
-            return 0  # Replace NaN with 0
-        elif math.isinf(num):
-            if num > 0:
-                return float(99999999999)  # Replace positive infinity
-            else:
-                return float(99999999999)  # Replace negative infinity
-        else:
-            return num  # Return the number if it is neither NaN nor infinite
+    def are_metrics_complete(self):
+        return all(metric_value is not None for metric_value in
+                   [self.ABS_REL, self.CADL, self.DELTA1, self.DELTA2, self.DELTA3, self.LOG10, self.MAE, self.MSE,
+                    self.RMSE])
 
     def normalize(self, value, min_value, max_value):
         """
