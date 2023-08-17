@@ -13,6 +13,7 @@ from nianetcae.cae_run import solve_architecture_problem
 from nianetcae.dataloaders.nyu_dataloader import NYUDataset
 from nianetcae.storage.database import SQLiteConnector
 
+
 if __name__ == '__main__':
 
     RUN_UUID = uuid.uuid4().hex
@@ -24,7 +25,13 @@ if __name__ == '__main__':
                         help='path to the config file',
                         default='configs/main_config.yaml')
 
+    parser.add_argument('--algorithms', '-alg',
+                        dest="algorithms",
+                        metavar='list_of_strings',
+                        help='NIA algorithms to use')
+
     args = parser.parse_args()
+
     with open(args.filename, 'r') as file:
         try:
             config = yaml.load(file, Loader=yaml.Loader)  # yaml.safe_load(file)
@@ -52,5 +59,12 @@ if __name__ == '__main__':
     nianetcae.cae_run.conn = conn
     nianetcae.cae_run.datamodule = datamodule
 
-    solve_architecture_problem(config['nia_search']['algorithms'])
+    algorithms = []
+    if args.algorithms is not None:
+        args.algorithms = args.algorithms.split(',')
+        algorithms = args.algorithms
+    else:
+        algorithms = config['nia_search']['algorithms']
+
+    solve_architecture_problem(algorithms)
     Log.info(f'\n Program end: {datetime.now().strftime("%H:%M:%S-%d/%m/%Y")}')

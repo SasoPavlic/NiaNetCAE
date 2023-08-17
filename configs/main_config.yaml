@@ -3,10 +3,10 @@ nia_search:
   runs: 1
   algorithms:
     - particle_swarm
-#    - differential_evolution
-#    - firefly
-#    - self_adaptive_differential_evolution
 #    - genetic_algorithm
+#    - firefly_algorithm
+#    - differential_evolution
+#    - self_adaptive_differential_evolution
 
 data_params:
   data_path: "/data/"

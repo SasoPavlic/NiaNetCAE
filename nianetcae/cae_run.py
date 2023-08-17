@@ -147,7 +147,7 @@ def solve_architecture_problem(selected_algorithms):
     algorithms = {
         "particle_swarm": ParticleSwarmAlgorithm(),
         "differential_evolution": DifferentialEvolution(),
-        "firefly": FireflyAlgorithm(),
+        "firefly_algorithm": FireflyAlgorithm(),
         "self_adaptive_differential_evolution": SelfAdaptiveDifferentialEvolution(),
         "genetic_algorithm": GeneticAlgorithm()
     }
