@@ -6,7 +6,6 @@ from torch import Tensor
 from log import Log
 from nianetcae.experiments.evaluationmetrics import EvaluationMetrics
 from nianetcae.models.conv_ae import ConvAutoencoder
-from nianetcae.visualize.batch_to_image import visualise_batch
 
 
 class FineTuneLearningRateFinder(LearningRateFinder):
@@ -124,30 +123,18 @@ class DNNAEExperiment(LightningModule):
 
     def test_step(self, batch, batch_idx, optimizer_idx=0):
         torch.cuda.empty_cache()
-        dataloader_iterator = iter(self.trainer.datamodule.test_dataloader())
+        results = self.forward(batch)
 
-        while True:
-            try:
-                batch = next(dataloader_iterator)
-                batch['image'] = batch['image'].to(self.curr_device)
-                batch['depth'] = batch['depth'].to(self.curr_device)
-                # Log path of the image
-                # Log.debug(f"Image path: {batch['path']}")
-            except StopIteration:
-                break
-            finally:
-                results = self.forward(batch)
+        self.metrics.to(self.curr_device)
 
-                self.metrics.to(self.curr_device)
+        test_loss = self.model.loss_function(self.curr_device,
+                                             **results,
+                                             optimizer_idx=optimizer_idx,
+                                             batch_idx=batch_idx)
 
-                test_loss = self.model.loss_function(self.curr_device,
-                                                     **results,
-                                                     optimizer_idx=optimizer_idx,
-                                                     batch_idx=batch_idx)
-
-                self.metrics.update(results['output'], results['depth'])
-                self.metrics.update_CADL(test_loss['loss'])
-                visualise_batch(self.model_path, batch_idx, **results)
+        self.metrics.update(results['output'], results['depth'])
+        self.metrics.update_CADL(test_loss['loss'])
+        # visualise_batch(self.model_path, batch_idx, **results)
 
         self.results = self.metrics.compute()
 

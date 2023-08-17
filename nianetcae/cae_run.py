@@ -20,24 +20,29 @@ datamodule = None
 
 
 def calculate_fitness(model, experiment):
-    error_x = experiment.metrics.MSE + experiment.metrics.RMSE + experiment.metrics.MAE + experiment.metrics.ABS_REL + experiment.metrics.LOG10
-    error_y = experiment.metrics.DELTA1 + experiment.metrics.DELTA2 + experiment.metrics.DELTA3
 
-    C_LAYERS = 10000
-    C_BOTTLENECK = 1000
+    if experiment.metrics.are_metrics_complete():
 
-    max_layers, min_layers = config['data_params']['horizontal_dim'], 0
-    max_bottleneck, min_bottleneck = config['data_params']['horizontal_dim'], 0
+        error_x = experiment.metrics.MSE + experiment.metrics.RMSE + experiment.metrics.MAE + experiment.metrics.ABS_REL + experiment.metrics.LOG10
+        error_y = experiment.metrics.DELTA1 + experiment.metrics.DELTA2 + experiment.metrics.DELTA3
 
-    normalized_num_layers = experiment.metrics.normalize(len(model.encoding_layers), min_layers, max_layers)
-    normalized_bottleneck = experiment.metrics.normalize(model.bottleneck_size, min_bottleneck, max_bottleneck)
+        C_LAYERS = 10000
+        C_BOTTLENECK = 1000
 
-    complexity = (normalized_num_layers * C_LAYERS) + (normalized_bottleneck * C_BOTTLENECK)
-    error = error_x - error_y
+        max_layers, min_layers = config['data_params']['horizontal_dim'], 0
+        max_bottleneck, min_bottleneck = config['data_params']['horizontal_dim'], 0
 
-    fitness = error + complexity
-    return fitness, error, complexity
+        normalized_num_layers = experiment.metrics.normalize(len(model.encoding_layers), min_layers, max_layers)
+        normalized_bottleneck = experiment.metrics.normalize(model.bottleneck_size, min_bottleneck, max_bottleneck)
 
+        complexity = (normalized_num_layers * C_LAYERS) + (normalized_bottleneck * C_BOTTLENECK)
+        error = error_x - error_y
+
+        fitness = error + complexity
+        return fitness, error, complexity
+    else:
+        Log.error("Some metric values are still None.")
+        return int(9e10), int(9e10), int(9e10)
 
 def upload_save_model(alg_name, iteration, solution, error, model, experiment, fitness, complexity, path):
     conn.post_entries(model, fitness, solution, error, complexity, alg_name, iteration,
@@ -77,13 +82,12 @@ class CONVAEArchitecture(ExtendedProblem):
             return fitness
 
         else:
-            # TODO Find a more optimal way
             """Punishing bad decisions"""
             if len(model.encoding_layers) == 0 or len(model.decoding_layers) == 0:
                 fitness = int(9e10)
                 complexity = int(9e10)
                 error = int(9e10)
-                conn.post_entries(model, fitness, solution, error, complexity, alg_name, self.iteration, )
+                conn.post_entries(model, fitness, solution, error, complexity, alg_name, self.iteration)
             else:
                 experiment = DNNAEExperiment(model, **config)
                 tb_logger = TensorBoardLogger(save_dir=config['logging_params']['save_dir'],
@@ -130,7 +134,7 @@ class CONVAEArchitecture(ExtendedProblem):
             return fitness
 
 
-def solve_architecture_problem():
+def solve_architecture_problem(selected_algorithms):
     """
     Dimensionality:
     y1: number of neurons per layer,
@@ -140,18 +144,24 @@ def solve_architecture_problem():
     """
     DIMENSIONALITY = 4
 
+    algorithms = {
+        "particle_swarm": ParticleSwarmAlgorithm(),
+        "differential_evolution": DifferentialEvolution(),
+        "firefly": FireflyAlgorithm(),
+        "self_adaptive_differential_evolution": SelfAdaptiveDifferentialEvolution(),
+        "genetic_algorithm": GeneticAlgorithm()
+    }
+
+    selected_algorithm_objects = [algorithms.get(algorithm_name) for algorithm_name in selected_algorithms if
+                                  algorithms.get(algorithm_name) is not None]
+
     runner = ExtendedRunner(
         config['logging_params']['save_dir'],
         dimension=DIMENSIONALITY,
+        optimization_type=OptimizationType.MINIMIZATION,
         max_evals=config['nia_search']['evaluations'],
         runs=config['nia_search']['runs'],
-        algorithms=[
-            ParticleSwarmAlgorithm(),
-            DifferentialEvolution(),
-            FireflyAlgorithm(),
-            SelfAdaptiveDifferentialEvolution(),
-            GeneticAlgorithm()
-        ],
+        algorithms=selected_algorithm_objects,
         problems=[
             CONVAEArchitecture(DIMENSIONALITY)
         ]

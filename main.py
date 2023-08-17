@@ -52,5 +52,5 @@ if __name__ == '__main__':
     nianetcae.cae_run.conn = conn
     nianetcae.cae_run.datamodule = datamodule
 
-    solve_architecture_problem()
+    solve_architecture_problem(config['nia_search']['algorithms'])
     Log.info(f'\n Program end: {datetime.now().strftime("%H:%M:%S-%d/%m/%Y")}')
