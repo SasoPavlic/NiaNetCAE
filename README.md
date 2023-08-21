@@ -11,17 +11,32 @@
 
 ### Description 📝
 
-The proposed method NiaNet attempts to pick hyperparameters and AE architecture that will result in a successful
-encoding and decoding (minimal difference between input and output). NiaNet uses the collection of algorithms available
+The proposed method NiaNetCAE attempts to pick hyperparameters and Convolutional autoencoder architecture that will result in a successful
+encoding and decoding (minimal difference between input and output). NiaNetCAE uses the collection of algorithms available
 in the library [NiaPy](https://github.com/NiaOrg/NiaPy) to navigate efficiently in waste search-space.
 
 ### What it can do? 👀
 
-* **Construct novel AE's architecture** using nature-inspired algorithms.
-* * number of solutions = layer step * layers * act. func. * optimizers
-* * 4.435.968 = 304 * 304 * 8  * 6
+* **Construct novel CONV AE's architecture** using nature-inspired algorithms.
+* **Selects the best hyperparameters** for the given dataset.
 * It can be utilized for **any kind of dataset**, which has **3D images** values.
-* Estimate the depth of the image
+* Applied for depth estimation
+
+Our example of the search space for the depth estimation problem:
+* **Search space** is defined by:
+  * **Architecture problem:**
+    * x: layer step _(difference between input and output dimension)_
+    * y: Number of layers _(architecture depth)_
+  * **Hyperparameter problem:**
+    * z: activation function
+    * w: optimizer algorithm
+* Total solutions:
+  * x: 304
+  * y: 304
+  * z: 8
+  * w: 6
+  * x * y * z * w = 4.435.968 unique solutions
+* NiaNetCAE can find the best solution by leveraging the power of nature-inspired algorithms.
 
 ### Installation ✅
 
@@ -30,19 +45,19 @@ Installing NiaNetCAE with pip3:
 TODO: Publish it to PyPi
 
 ```sh
-pip3 install nianet-hpc
+pip3 install nianetcae
 ```
 
 ### Documentation 📘
 
-The purpose of this paper is to get an understanding of the NiaNetCAE approach (without HPC).
+The purpose of this paper is to get an understanding of the NiaNetCAE approach.
 
 **TODO - Future Journal:**
-[NiaNetCAE for depth estimation](https://www.sasopavlic.com/)
+[NiaNetCAE for depth estimation]()
 
 ### Examples
 
-Usage examples can be found [here](nianetcae/experiments). Currently there is an example for finding the appropriate Convolutional Autoencoder for depth estimation on NYU2 Dataset.
+Usage examples can be found [here](nianetcae/experiments). Currently, there is an example for finding the appropriate Convolutional Autoencoder for depth estimation on NYU2 Dataset.
 
 ### Getting started 🔨
 
@@ -65,10 +80,10 @@ Set the boundaries of your search space with [conv_ae.py](nianetcae/models/conv_
 
 The following dimensions can be modified:
 
-* y1: number of neurons per layer,
-* y2: number of layers,
-* y3: activation function
-* y4: optimizer algorithm.
+* x: layer step
+* y: number of layers,
+* z: activation function
+* w: optimizer algorithm.
 
 You can run the NiaNetCAE script once your setup is complete.
 
