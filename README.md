@@ -113,26 +113,31 @@ docker run \
 1. First build an image with docker (above example)
 2. Docker push to Docker Hub: ```docker push username/nianetcae:latest```
 3. SSH into a HPC Cluster via your access credentials
-4. Create the following _run.sh_ script: ```cat > run.sh```
+4. Create the following _nianetcae.sh_ script: ```cat > nianetcae.sh```
 ```
 #!/bin/bash
 ## Running code on SLURM cluster
-#SBATCH -J nianet-cae
-#SBATCH -o nianet-cae-%j.out
-#SBATCH -e nianet-cae-%j.err
+##https://pytorch-lightning.readthedocs.io/en/stable/clouds/cluster_advanced.html
+#SBATCH -J nianet-pso
+#SBATCH -o nianet-pso-%j.out
+#SBATCH -e nianet-pso-%j.err
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --partition=gpu
-#SBATCH --mem-per-gpu=32GB  # memory per GPU
+#SBATCH --mem-per-gpu=8GB  # memory per GPU
 #SBATCH --gres=gpu:1
 #SBATCH --time=72:00:00
 
-singularity exec -e --pwd /app -B $(pwd)/logs:/app/logs,$(pwd)/data:/app/data,$(pwd)/configs:/app/configs --nv docker://spartan300/nianet:cae python main.py
+singularity exec -e \
+    --pwd /app \
+    -B $(pwd)/logs:/app/logs,$(pwd)/data:/app/data,$(pwd)/configs:/app/configs \
+    --nv docker://spartan300/nianet:cae \
+    python main.py -alg particle_swarm
 ```
-1. Make script executable: ```chmod +x run.sh```
+1. Make script executable: ```chmod +x nianetcae.sh```
 2. Make sure that you have the following folders in your current directory: logs, data, configs
 3. Set folder permissions to 777: ```chmod -R 777 logs data configs```
-4. Submit your script to a job scheduler: ```SBATCH run.sh```
+4. Submit your script to a job scheduler: ```SBATCH nianetcae.sh```
 
 ### HELP ⚠️
 
