@@ -6,6 +6,7 @@ from torch import Tensor
 from log import Log
 from nianetcae.experiments.evaluationmetrics import EvaluationMetrics
 from nianetcae.models.conv_ae import ConvAutoencoder
+from nianetcae.visualize.batch_to_image import visualise_batch
 
 
 class FineTuneLearningRateFinder(LearningRateFinder):
@@ -89,13 +90,12 @@ class DNNAEExperiment(LightningModule):
         else:
             return torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
 
-    def training_step(self, batch, batch_idx, optimizer_idx=0):
+    def training_step(self, batch, batch_idx):
         torch.cuda.empty_cache()
         results = self.forward(batch)
         self.curr_device = batch['image'].device
         self.train_loss = self.model.loss_function(self.curr_device,
                                                    **results,
-                                                   optimizer_idx=optimizer_idx,
                                                    batch_idx=batch_idx)
 
         self.log_dict({key: val.item() for key, val in self.train_loss.items()}, prog_bar=True, sync_dist=True,
@@ -134,7 +134,7 @@ class DNNAEExperiment(LightningModule):
 
         self.metrics.update(results['output'], results['depth'])
         self.metrics.update_CADL(test_loss['loss'])
-        # visualise_batch(self.model_path, batch_idx, **results)
+        visualise_batch(self.model_path, batch_idx, **results)
 
         self.results = self.metrics.compute()
 

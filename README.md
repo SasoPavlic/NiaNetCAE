@@ -111,7 +111,7 @@ docker run \
 ##### Running NiaNetCAE script with HPC SLURM:
 
 1. First build an image with docker (above example)
-2. Docker push to Docker Hub: ```docker push username/nianetcae:latest```
+2. Docker push to Docker Hub: ```docker push username/nianet:cae```
 3. SSH into a HPC Cluster via your access credentials
 4. Create the following _nianetcae.sh_ script: ```cat > nianetcae.sh```
 ```

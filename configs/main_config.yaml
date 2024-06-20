@@ -3,10 +3,10 @@ nia_search:
   runs: 1
   algorithms:
     - particle_swarm
-#    - genetic_algorithm
-#    - firefly_algorithm
-#    - differential_evolution
-#    - self_adaptive_differential_evolution
+    - genetic_algorithm
+    - firefly_algorithm
+    - differential_evolution
+    - self_adaptive_differential_evolution
 
 data_params:
   data_path: "/data/"
@@ -14,16 +14,16 @@ data_params:
   channel_dim: 3
   horizontal_dim: 304
   vertical_dim: 304
-  train_size: 90 #Shared dataset
-  test_size: 100 #Own dataset
-  val_size: 10 #Shared dataset
+  train_size: 90 # Train dataset size derived from NYU v2 dataset
+  test_size: 100 # Test dataset size as provided by NYU v2 dataset
+  val_size: 10 # Validation dataset derived from train dataset due to absence in NYU v2 dataset
   batch_size: 32
   num_workers: 0
   pin_memory: True
 
 trainer_params:
   min_epochs: 1
-  max_epochs: 20 #20
+  max_epochs: 20
 
 early_stop:
   monitor: "loss"
