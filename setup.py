@@ -5,7 +5,7 @@ setup(
     version='1.0.0',
     packages=['nianetcae', 'nianetcae.models', 'nianetcae.storage', 'nianetcae.visualize', 'nianetcae.dataloaders',
               'nianetcae.experiments', 'nianetcae.niapy_extension'],
-    url='https://github.com/SasoPavlic/NiaNetCAE/tree/9419bb55dfa7d5a79f4e3824b727265dac07911e',
+    url='https://github.com/SasoPavlic/NiaNetCAE',
     license='MIT License',
     author='Saso Pavlic',
     author_email='saso.pavlic@student.um.si',
