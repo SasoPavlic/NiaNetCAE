@@ -10,7 +10,8 @@ rm -rf logs data configs
 mkdir -m 777 logs data configs
 # Check if data.zip exists otherwise download it from url
 if [ ! -f data.zip ]; then
-    wget https://github.com/SasoPavlic/NiaNetCAE/blob/main/data/nyu_data.zip
+    wget wget "GET ZIP FILE ONLINE, IT IS TOO BIG FOR GITHUB" -O output.zip
+
 fi
 # Unzip content of data.zip to folder data
 unzip data.zip -d data
