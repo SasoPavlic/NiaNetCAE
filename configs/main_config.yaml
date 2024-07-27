@@ -9,7 +9,7 @@ nia_search:
     - self_adaptive_differential_evolution
 
 data_params:
-  data_path: "/data/"
+  data_path: "data/"
   data_percentage: 100
   channel_dim: 3
   horizontal_dim: 304

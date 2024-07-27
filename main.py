@@ -10,7 +10,7 @@ from lightning.pytorch import seed_everything
 import nianetcae
 from log import Log
 from nianetcae.cae_run import solve_architecture_problem
-from nianetcae.dataloaders.nyu_dataloader import NYUDataset
+from nianetcae.dataloaders.nyu_dataloader import NYUDataLoader
 from nianetcae.storage.database import SQLiteConnector
 
 
@@ -51,7 +51,7 @@ if __name__ == '__main__':
     conn = SQLiteConnector(config['logging_params']['db_storage'], f"solutions")  # _{RUN_UUID}")
     seed_everything(config['exp_params']['manual_seed'], True)
 
-    datamodule = NYUDataset(**config["data_params"])
+    datamodule = NYUDataLoader(**config["data_params"])
     datamodule.setup()
 
     nianetcae.cae_run.RUN_UUID = RUN_UUID
