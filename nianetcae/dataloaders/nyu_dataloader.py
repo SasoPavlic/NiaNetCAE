@@ -2,6 +2,7 @@ import os
 from typing import Optional
 
 import pandas as pd
+import torch
 from lightning.pytorch import LightningDataModule
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Dataset
@@ -33,6 +34,7 @@ class BaseDataLoader(LightningDataModule):
             train_size: float,
             val_size: float,
             test_size: float,
+            data_percentage: float,
             **kwargs,
     ):
         super().__init__()
@@ -43,6 +45,7 @@ class BaseDataLoader(LightningDataModule):
         self.train_size = train_size
         self.val_size = val_size
         self.test_size = test_size
+        self.data_percentage = data_percentage
 
     def setup(self, stage: Optional[str] = None) -> None:
         raise NotImplementedError("This method should be overridden by subclasses")
@@ -101,7 +104,6 @@ class NYUDataLoader(BaseDataLoader):
             data_path=data_path,
             data_percentage=data_percentage,
             batch_size=batch_size,
-            channel_dim=channel_dim,
             num_workers=num_workers,
             pin_memory=pin_memory,
             train_size=train_size,
@@ -111,6 +113,7 @@ class NYUDataLoader(BaseDataLoader):
         )
         self.horizontal_dim = horizontal_dim
         self.vertical_dim = vertical_dim
+        self.channel_dim = channel_dim
 
     def setup(self, stage: Optional[str] = None) -> None:
         base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -128,6 +131,10 @@ class NYUDataLoader(BaseDataLoader):
 
         # Combine train and test dataframes
         combined_df = pd.concat([train_df, test_df])
+
+        # Apply data percentage filter
+        combined_df = combined_df.sample(frac=self.data_percentage / 100.0, random_state=42)
+
         combined_df = combined_df.sample(frac=1).reset_index(drop=True)  # Shuffle the combined dataset
 
         # Split the data into train, validation, and test sets
