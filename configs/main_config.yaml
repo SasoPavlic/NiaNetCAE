@@ -15,7 +15,7 @@ data_params:
   horizontal_dim: 304
   vertical_dim: 304
   train_size: 90 # Train dataset size derived from NYU v2 dataset
-  test_size: 100 # Test dataset size as provided by NYU v2 dataset
+  test_size: 10 # Test dataset size as provided by NYU v2 dataset
   val_size: 10 # Validation dataset derived from train dataset due to absence in NYU v2 dataset
   batch_size: 32
   num_workers: 0

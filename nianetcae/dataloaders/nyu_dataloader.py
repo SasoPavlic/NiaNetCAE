@@ -12,16 +12,7 @@ from log import Log
 from .nyu_transformer import *
 
 
-class BaseDataset(Dataset):
-    def __init__(self, data, targets):
-        self.data = torch.tensor(data).float()
-        self.targets = torch.tensor(targets).float()
 
-    def __len__(self):
-        return len(self.data)
-
-    def __getitem__(self, index):
-        return self.data[index], self.targets[index]
 
 
 class BaseDataLoader(LightningDataModule):
@@ -137,13 +128,23 @@ class NYUDataLoader(BaseDataLoader):
 
         combined_df = combined_df.sample(frac=1).reset_index(drop=True)  # Shuffle the combined dataset
 
-        # Split the data into train, validation, and test sets
-        train_data, test_data = train_test_split(combined_df, test_size=self.test_size)
-        train_data, val_data = train_test_split(train_data, test_size=self.val_size)
+        # Calculate sizes for train, validation, and test sets
+        total_size = len(combined_df)
+        test_size = int(total_size * self.test_size / 100)
+        val_size = int(total_size * self.val_size / 100)
+        train_size = total_size - test_size - val_size
+
+        # Split the combined data into train, validation, and test sets
+        train_data, test_data = train_test_split(combined_df, test_size=test_size, random_state=42)
+        train_data, val_data = train_test_split(train_data, test_size=val_size, random_state=42)
 
         self.train_dataset = NYUDataset(train_data, transform=self.get_transform(train=True))
         self.val_dataset = NYUDataset(val_data, transform=self.get_transform(train=False))
         self.test_dataset = NYUDataset(test_data, transform=self.get_transform(train=False))
+
+        Log.info(f"Train size: {len(self.train_dataset)}")
+        Log.info(f"Validation size: {len(self.val_dataset)}")
+        Log.info(f"Test size: {len(self.test_dataset)}")
 
     def get_transform(self, train=True):
         __imagenet_pca = {
