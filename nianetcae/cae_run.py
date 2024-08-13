@@ -44,7 +44,7 @@ def calculate_fitness(model, experiment):
         Log.error("Some metric values are still None.")
         return int(9e10), int(9e10), int(9e10)
 
-def upload_save_model(alg_name, iteration, solution, error, model, experiment, fitness, complexity, path):
+def upload_save_model(alg_name, iteration, solution, error, model, experiment, fitness, complexity, path, start_time, end_time, duration):
     conn.post_entries(model, fitness, solution, error, complexity, alg_name, iteration,
                       experiment.metrics.MSE,
                       experiment.metrics.RMSE,
@@ -54,7 +54,10 @@ def upload_save_model(alg_name, iteration, solution, error, model, experiment, f
                       experiment.metrics.DELTA1,
                       experiment.metrics.DELTA2,
                       experiment.metrics.DELTA3,
-                      experiment.metrics.CADL)
+                      experiment.metrics.CADL,
+                      start_time,
+                      end_time,
+                      duration)
     torch.save(model.state_dict(), path + f"/model.pt")
 
 
@@ -117,9 +120,12 @@ class CONVAEArchitecture(ExtendedProblem):
                                   **config['trainer_params'])
 
                 Log.info(f"======= Training {config['model_params']['name']} =======")
-                Log.info(f'\nTraining start: {datetime.now().strftime("%H:%M:%S-%d/%m/%Y")}')
+                start_time = datetime.now()
+                Log.info(f'\nTraining start: {start_time.strftime("%Y-%m-%d %H:%M:%S")}')
                 trainer.fit(experiment, datamodule=datamodule)
-                Log.info(f'\nTraining end: {datetime.now().strftime("%H:%M:%S-%d/%m/%Y")}')
+                end_time = datetime.now()
+                Log.info(f'\nTraining end: {end_time.strftime("%Y-%m-%d %H:%M:%S")}')
+                duration = (end_time - start_time).total_seconds()
                 trainer.test(experiment, datamodule=datamodule)
 
                 fitness, error, complexity = calculate_fitness(model, experiment)
@@ -127,7 +133,7 @@ class CONVAEArchitecture(ExtendedProblem):
                 Log.debug(tabulate([[complexity, fitness]], headers=["Complexity", "Fitness"],
                                    tablefmt="pretty"))
                 upload_save_model(alg_name, self.iteration, solution, error, model, experiment, fitness, complexity,
-                                  path)
+                                  path, start_time, end_time, duration)
 
             if np.isnan(fitness):
                 fitness = int(9e10)

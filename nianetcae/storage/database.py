@@ -66,14 +66,22 @@ class SQLiteConnector():
                      DELTA1=infinity,
                      DELTA2=infinity,
                      DELTA3=infinity,
-                     CADL=infinity):
+                     CADL=infinity,
+                     start_time=None, end_time=None, duration=None):
         try:
             self.create_connection()
             json_solution = json.dumps(solution.tolist())
 
+            # Convert start_time and end_time to strings when storing in the database
+            start_time_str = start_time.strftime("%Y-%m-%d %H:%M:%S") if start_time else None
+            end_time_str = end_time.strftime("%Y-%m-%d %H:%M:%S") if end_time else None
+
             df = pd.DataFrame({'hash_id': str(model.hash_id),
-                               'timestamp': str(datetime.now().strftime("%H:%M %d-%m-%Y")),
                                'algorithm_name': str(alg_name),
+                               'timestamp': str(datetime.now().strftime("%H:%M %d-%m-%Y")),
+                               'start_time': start_time_str,
+                               'end_time': end_time_str,
+                               'duration': duration,  # Store the duration
                                'iteration': int(iteration),
                                'encoding_layers': str(model.encoding_layers),
                                'decoding_layers': str(model.decoding_layers),
@@ -106,8 +114,11 @@ class SQLiteConnector():
                        create table IF NOT EXISTS {self.table_name}
                         (
                             hash_id         TEXT,
-                            timestamp       TEXT,
                             algorithm_name  TEXT,
+                            timestamp       TEXT,
+                            start_time      TEXT,
+                            end_time        TEXT,
+                            duration        REAL,  # Add a duration column
                             iteration       INTEGER,
                             activation      TEXT,
                             optimizer       TEXT,

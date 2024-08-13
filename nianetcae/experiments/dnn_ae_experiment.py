@@ -127,13 +127,13 @@ class DNNAEExperiment(LightningModule):
 
         self.metrics.to(self.curr_device)
 
-        test_loss = self.model.loss_function(self.curr_device,
+        batch_loss = self.model.loss_function(self.curr_device,
                                              **results,
                                              optimizer_idx=optimizer_idx,
                                              batch_idx=batch_idx)
 
         self.metrics.update(results['output'], results['depth'])
-        self.metrics.update_CADL(test_loss['loss'])
+        self.metrics.update_CADL(batch_loss['loss'])
         visualise_batch(self.model_path, batch_idx, **results)
 
         self.results = self.metrics.compute()
