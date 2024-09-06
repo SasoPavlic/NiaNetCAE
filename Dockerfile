@@ -4,13 +4,14 @@
 # https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#install-guide
 # https://github.com/Lightning-AI/lightning/tree/master/dockers
 
-
 ARG PYTHON_VERSION=3.10
 ARG PYTORCH_VERSION=2.0
-ARG CUDA_VERSION=11.7.1
+ARG CUDA_VERSION=11.8.0
 
-FROM pytorchlightning/pytorch_lightning:base-cuda-py${PYTHON_VERSION}-torch${PYTORCH_VERSION}-cuda${CUDA_VERSION}
-#FROM pytorchlightning/pytorch_lightning:base-cuda-py3.10-torch2.0-cuda11.7.1
+# Base cuda image
+#FROM pytorchlightning/pytorch_lightning:base-cuda-py${PYTHON_VERSION}-torch${PYTORCH_VERSION}-cuda${CUDA_VERSION}
+# Latest image
+FROM pytorchlightning/pytorch_lightning:latest-py${PYTHON_VERSION}-torch${PYTORCH_VERSION}-cuda${CUDA_VERSION}
 
 LABEL maintainer="Lightning-AI <https://github.com/Lightning-AI>"
 
@@ -24,7 +25,7 @@ WORKDIR /app
 # To copy in multiple layers:
 # Rebuilding docker image will be faster on change, but the image will be bigger
 COPY requirements.txt /app/requirements.txt
-RUN pip3 install -r requirements.txt
+RUN pip3 install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cu118
 
 RUN mkdir data
 RUN mkdir configs
