@@ -34,7 +34,6 @@ pymannkendall = "^1.4.3"
 mk = "^2.4.1"
 seaborn = "^0.13.0"
 plotly = "^5.18.0"
-animation = "^0.0.7"
 
 
 [build-system]
