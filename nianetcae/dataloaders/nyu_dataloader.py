@@ -64,9 +64,9 @@ class NYUDataset(Dataset):
 
     def __getitem__(self, index):
         sample = {
-            'image': Image.open(self.data.iloc[index]['image']),
-            'depth': Image.open(self.data.iloc[index]['depth']),
-            'path': self.data.iloc[index]['image']
+            'image': Image.open(os.path.join("data/nyu2_dataset/",self.data.iloc[index]['image'])),
+            'depth': Image.open(os.path.join("data/nyu2_dataset/",self.data.iloc[index]['depth'])),
+            'path': os.path.join("data/nyu2_dataset/",self.data.iloc[index]['image'])
         }
 
         if self.transform:
@@ -78,7 +78,7 @@ class NYUDataset(Dataset):
 class NYUDataLoader(BaseDataLoader):
     def __init__(
             self,
-            data_path: str = 'data/',
+            data_path: str = 'data/nyu2_dataset/',
             data_percentage: int = 100,
             batch_size: int = 32,
             channel_dim: int = 3,
@@ -117,8 +117,8 @@ class NYUDataLoader(BaseDataLoader):
             df = pd.read_csv(csv_file_path, header=None, names=['image', 'depth'])
             return df
 
-        train_df = load_csv_data("data/nyu2_train.csv")
-        test_df = load_csv_data("data/nyu2_test.csv")
+        train_df = load_csv_data("data/nyu2_dataset/data/nyu2_train.csv")
+        test_df = load_csv_data("data/nyu2_dataset/data/nyu2_test.csv")
 
         # Combine train and test dataframes
         combined_df = pd.concat([train_df, test_df])
