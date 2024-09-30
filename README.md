@@ -67,7 +67,7 @@ Usage examples can be found [here](nianetcae/experiments). Currently, there is a
 2. Modify the parameters in [main_config.py](configs/main_config.yaml)
 2. Adjust the dataloader logic in [dataloaders](nianetcae/dataloaders) folder.
 3. Specify the search space in [conv_ae.py](nianetcae/models/conv_ae.py) from your problem domain.
-3. Redesign the fitness function in [cae_run.py](nianetcae/cae_run.py) based on your optimization.
+3. Redesign the fitness function in [cae_architecture_search.py](nianetcae/cae_architecture_search.py) based on your optimization.
 
 ##### Changing dataset:
 

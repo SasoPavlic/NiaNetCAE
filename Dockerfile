@@ -39,7 +39,7 @@ COPY nianetcae/experiments /app/nianetcae/experiments
 COPY nianetcae/models /app/nianetcae/models
 
 COPY nianetcae/__init__.py /app/nianetcae/__init__.py
-COPY nianetcae/cae_run.py /app/nianetcae/cae_run.py
+COPY nianetcae/cae_architecture_search.py /app/nianetcae/cae_architecture_search.py
 
 COPY tests/test_model.py /app/tests/test_model.py
 COPY tests/__init__.py /app/tests/__init__.py

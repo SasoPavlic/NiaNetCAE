@@ -9,7 +9,7 @@ from lightning.pytorch import seed_everything
 
 import nianetcae
 from log import Log
-from nianetcae.cae_run import solve_architecture_problem
+from nianetcae.cae_architecture_search import solve_architecture_problem
 from nianetcae.dataloaders.nyu_dataloader import NYUDataLoader
 from nianetcae.storage.database import SQLiteConnector
 
@@ -73,10 +73,10 @@ if __name__ == '__main__':
     datamodule = select_dataloader(config)
     datamodule.setup()
 
-    nianetcae.cae_run.RUN_UUID = RUN_UUID
-    nianetcae.cae_run.config = config
-    nianetcae.cae_run.conn = conn
-    nianetcae.cae_run.datamodule = datamodule
+    nianetcae.cae_architecture_search.RUN_UUID = RUN_UUID
+    nianetcae.cae_architecture_search.config = config
+    nianetcae.cae_architecture_search.conn = conn
+    nianetcae.cae_architecture_search.datamodule = datamodule
 
     algorithms = []
     if args.algorithms is not None:
