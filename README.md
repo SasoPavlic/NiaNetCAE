@@ -57,7 +57,7 @@ The purpose of this paper is to get an understanding of the NiaNetCAE approach.
 
 ### Examples
 
-Usage examples can be found [here](nianetcae/experiments). Currently, there is an example for finding the appropriate Convolutional Autoencoder for depth estimation on NYU2 Dataset.
+Usage examples can be found [here](nianetcae/experiments). Currently, there is an example for finding the appropriate Convolutional Autoencoder architectures for depth estimation on [NYU Depth Dataset V2](https://cs.nyu.edu/~fergus/datasets/nyu_depth_v2.html).
 
 ### Getting started 🔨
 
